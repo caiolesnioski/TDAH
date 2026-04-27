@@ -4,10 +4,21 @@ import { SidebarTrigger } from '@/components/ui/sidebar';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/tasks/notion': 'Minhas Tarefas',
+  '/dashboard/conquistas': 'Conquistas',
+  '/dashboard/estatisticas': 'Estatísticas',
   '/schedule/week': 'Minha Semana',
+  '/schedule/today': 'Hoje',
+  '/schedule/tomorrow': 'Amanhã',
   '/schedule/routine': 'Rotina Semanal',
+  '/schedule/new': 'Novo Horário',
+  '/schedule/list': 'Compromissos',
+  '/tasks/notion': 'Minhas Tarefas',
+  '/tasks/completed': 'Tarefas Concluídas',
+  '/tasks/by-category': 'Tarefas por Categoria',
   '/focus': 'Timer de Foco',
+  '/settings/profile': 'Perfil',
+  '/settings/notifications': 'Notificações',
+  '/settings/tdah': 'Preferências TDAH',
 };
 
 export function SiteHeader() {

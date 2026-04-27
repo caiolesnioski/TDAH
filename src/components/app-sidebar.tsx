@@ -12,7 +12,6 @@ import {
   SidebarRail,
 } from '@/components/ui/sidebar';
 
-// Dados do usuário (mock - será substituído por dados reais do AuthContext)
 const getUserData = () => {
   const storedUser = localStorage.getItem('user');
   if (storedUser) {
@@ -24,21 +23,12 @@ const getUserData = () => {
         avatar: '',
       };
     } catch {
-      return {
-        name: 'Usuário',
-        email: 'usuario@email.com',
-        avatar: '',
-      };
+      return { name: 'Usuário', email: 'usuario@email.com', avatar: '' };
     }
   }
-  return {
-    name: 'Usuário',
-    email: 'usuario@email.com',
-    avatar: '',
-  };
+  return { name: 'Usuário', email: 'usuario@email.com', avatar: '' };
 };
 
-// Navegação principal do TDAH Manager
 const navItems = [
   {
     title: 'Dashboard',
@@ -46,20 +36,9 @@ const navItems = [
     icon: Home,
     isActive: true,
     items: [
-      {
-        title: 'Visão Geral',
-        url: '/dashboard',
-      },
-      {
-        title: 'Conquistas',
-        url: '/dashboard/conquistas',
-        disabled: true,
-      },
-      {
-        title: 'Estatísticas',
-        url: '/dashboard/estatisticas',
-        disabled: true,
-      },
+      { title: 'Visão Geral',  url: '/dashboard' },
+      { title: 'Conquistas',   url: '/dashboard/conquistas' },
+      { title: 'Estatísticas', url: '/dashboard/estatisticas' },
     ],
   },
   {
@@ -67,24 +46,10 @@ const navItems = [
     url: '/schedule/week',
     icon: Calendar,
     items: [
-      {
-        title: 'Hoje',
-        url: '/semana/hoje',
-        disabled: true,
-      },
-      {
-        title: 'Amanhã',
-        url: '/semana/amanha',
-        disabled: true,
-      },
-      {
-        title: 'Visão Semanal',
-        url: '/schedule/week',
-      },
-      {
-        title: 'Calendário',
-        url: '/schedule/week',
-      },
+      { title: 'Hoje',          url: '/schedule/today' },
+      { title: 'Amanhã',        url: '/schedule/tomorrow' },
+      { title: 'Visão Semanal', url: '/schedule/week' },
+      { title: 'Calendário',    url: '/schedule/week' },
     ],
   },
   {
@@ -92,50 +57,21 @@ const navItems = [
     url: '/tasks/notion',
     icon: ListTodo,
     items: [
-      {
-        title: 'Todas as Tarefas',
-        url: '/tasks/notion',
-      },
-      {
-        title: 'Nova Tarefa',
-        url: '/tasks/notion',
-      },
-      {
-        title: 'Concluídas',
-        url: '/tarefas/concluidas',
-        disabled: true,
-      },
-      {
-        title: 'Por Categoria',
-        url: '/tarefas/categorias',
-        disabled: true,
-      },
+      { title: 'Todas as Tarefas', url: '/tasks/notion' },
+      { title: 'Nova Tarefa',      url: '/tasks/notion' },
+      { title: 'Concluídas',       url: '/tasks/completed' },
+      { title: 'Por Categoria',    url: '/tasks/by-category' },
     ],
   },
   {
     title: 'Horários Fixos',
-    url: '/horarios',
+    url: '/schedule/list',
     icon: Clock,
     items: [
-      {
-        title: 'Minha Rotina',
-        url: '/schedule/routine',
-      },
-      {
-        title: 'Novo Horário',
-        url: '/horarios/novo',
-        disabled: true,
-      },
-      {
-        title: 'Compromissos',
-        url: '/horarios/compromissos',
-        disabled: true,
-      },
-      {
-        title: 'Repetições',
-        url: '/horarios/repeticoes',
-        disabled: true,
-      },
+      { title: 'Minha Rotina',  url: '/schedule/routine' },
+      { title: 'Novo Horário',  url: '/schedule/new' },
+      { title: 'Compromissos',  url: '/schedule/list' },
+      { title: 'Repetições',    url: '/schedule/routine', disabled: true },
     ],
   },
   {
@@ -148,29 +84,13 @@ const navItems = [
   },
   {
     title: 'Configurações',
-    url: '/configuracoes',
+    url: '/settings/profile',
     icon: Settings,
     items: [
-      {
-        title: 'Perfil',
-        url: '/configuracoes/perfil',
-        disabled: true,
-      },
-      {
-        title: 'Notificações',
-        url: '/configuracoes/notificacoes',
-        disabled: true,
-      },
-      {
-        title: 'Aparência',
-        url: '/configuracoes/aparencia',
-        disabled: true,
-      },
-      {
-        title: 'Preferências TDAH',
-        url: '/configuracoes/tdah',
-        disabled: true,
-      },
+      { title: 'Perfil',            url: '/settings/profile' },
+      { title: 'Notificações',      url: '/settings/notifications' },
+      { title: 'Aparência',         url: '/settings/profile', disabled: true },
+      { title: 'Preferências TDAH', url: '/settings/tdah' },
     ],
   },
 ];
@@ -179,7 +99,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [userData, setUserData] = React.useState(getUserData());
 
   React.useEffect(() => {
-    // Atualiza os dados do usuário quando o componente monta
     setUserData(getUserData());
   }, []);
 
