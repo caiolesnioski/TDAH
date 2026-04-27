@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -25,6 +26,8 @@ import {
   Dumbbell,
   Gamepad2,
   MoreHorizontal,
+  Plus,
+  Timer,
 } from 'lucide-react';
 import type { UserStats, Achievement } from '@/types';
 
@@ -368,6 +371,7 @@ const getRandomQuote = () => motivationalQuotes[Math.floor(Math.random() * motiv
 const initialQuote = getRandomQuote();
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats] = useState<UserStats>(mockUserStats);
   const [quote] = useState(initialQuote);
 
@@ -401,6 +405,41 @@ export default function Dashboard() {
                   <div>
                     <h2 className="text-xl font-bold mb-1">Olá! Bem-vindo de volta!</h2>
                     <p className="text-white/90">{quote}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Ação Rápida */}
+            <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
+              <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-800 dark:text-white">
+                      O que você vai fazer hoje? 💪
+                    </h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                      Suas tarefas estão esperando por você
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => navigate('/focus')}
+                      className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950"
+                    >
+                      <Timer className="h-4 w-4" />
+                      Foco
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate('/tasks/notion')}
+                      className="gap-1.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Adicionar Tarefa
+                    </Button>
                   </div>
                 </div>
               </CardContent>

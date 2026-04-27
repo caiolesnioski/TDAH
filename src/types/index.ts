@@ -44,6 +44,7 @@ export interface Task {
   estimatedMinutes: number;
   actualMinutes?: number;
   deadline: string;
+  dueDate?: string;
   createdAt: string;
   updatedAt: string;
 }

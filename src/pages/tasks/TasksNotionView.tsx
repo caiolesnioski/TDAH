@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import confetti from 'canvas-confetti';
+import toast from 'react-hot-toast';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -120,6 +123,7 @@ const createEmptyTask = (): Task => ({
 
 export default function TasksNotionView() {
   const [tasks, setTasks] = useState<Task[]>(loadTasks);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
 
   // Salvar automaticamente quando as tarefas mudam
   useEffect(() => {
@@ -161,9 +165,14 @@ export default function TasksNotionView() {
           : task
       )
     );
+    if (completed) {
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      toast.success('🎉 +10 XP! Tarefa concluída!', { duration: 3000 });
+    }
   }, []);
 
   return (
+    <>
     <SidebarProvider
       style={
         {
@@ -204,12 +213,13 @@ export default function TasksNotionView() {
             {/* Lista de Tarefas */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
               {/* Cabeçalho da tabela */}
-              <div className="hidden md:grid md:grid-cols-[48px_1fr_160px_100px_100px_48px_48px] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <div className="hidden md:grid md:grid-cols-[48px_1fr_130px_90px_120px_80px_48px_48px] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 <div></div>
                 <div>Título</div>
                 <div>Categoria</div>
                 <div>Prioridade</div>
-                <div>Minutos</div>
+                <div>Prazo</div>
+                <div>Min</div>
                 <div></div>
                 <div></div>
               </div>
@@ -217,12 +227,23 @@ export default function TasksNotionView() {
               {/* Linhas de tarefas */}
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
                 {tasks.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                    <ListTodo className="h-12 w-12 mb-4 opacity-50" />
-                    <p className="text-lg font-medium">Nenhuma tarefa ainda</p>
-                    <p className="text-sm">
-                      Clique em "Nova Tarefa" para começar
-                    </p>
+                  <div className="flex flex-col items-center justify-center py-16 space-y-4">
+                    <div className="text-6xl select-none">📝</div>
+                    <div className="text-center space-y-1">
+                      <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                        Nenhuma tarefa ainda!
+                      </p>
+                      <p className="text-sm text-gray-400 dark:text-gray-500">
+                        Que tal começar com uma pequena? 🚀
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleAddTask}
+                      className="gap-2 bg-gradient-to-r from-focus-blue-500 to-calm-purple-500 hover:from-focus-blue-600 hover:to-calm-purple-600"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Criar Primeira Tarefa
+                    </Button>
                   </div>
                 ) : (
                   tasks.map((task) => {
@@ -231,12 +252,19 @@ export default function TasksNotionView() {
                     const priorityConfig = PRIORITY_CONFIG[task.priority];
                     const CategoryIcon = categoryConfig.icon;
 
+                    const today = new Date().toISOString().substring(0, 10);
+                    const tomorrow = new Date(Date.now() + 86400000).toISOString().substring(0, 10);
+                    const isOverdue = !isCompleted && task.dueDate && task.dueDate < today;
+                    const isDueToday = !isCompleted && task.dueDate === today;
+                    const isDueTomorrow = !isCompleted && task.dueDate === tomorrow;
+
                     return (
                       <div
                         key={task.id}
                         className={cn(
-                          'grid grid-cols-1 md:grid-cols-[48px_1fr_160px_100px_100px_48px_48px] gap-2 md:gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group',
-                          isCompleted && 'bg-gray-50/50 dark:bg-gray-800/50'
+                          'grid grid-cols-1 md:grid-cols-[48px_1fr_130px_90px_120px_80px_48px_48px] gap-2 md:gap-2 px-4 py-3 items-center hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors group',
+                          isCompleted && 'bg-gray-50/50 dark:bg-gray-800/50',
+                          isOverdue && 'border-l-4 border-red-400'
                         )}
                       >
                         {/* Checkbox */}
@@ -344,6 +372,36 @@ export default function TasksNotionView() {
                           </Select>
                         </div>
 
+                        {/* Prazo */}
+                        <div className="flex items-center">
+                          <div className="relative w-full">
+                            <input
+                              type="date"
+                              value={task.dueDate ?? ''}
+                              onChange={(e) =>
+                                updateTask(task.id, {
+                                  dueDate: e.target.value || undefined,
+                                })
+                              }
+                              className={cn(
+                                'w-full h-8 rounded-md text-xs px-2 bg-transparent border-0 focus:outline-none focus:ring-2 focus:ring-focus-blue-500',
+                                isOverdue && 'text-red-500 font-medium',
+                                isDueToday && 'text-amber-600 font-medium',
+                                isDueTomorrow && 'text-blue-600',
+                                !task.dueDate && 'text-gray-400'
+                              )}
+                            />
+                            {(isOverdue || isDueToday) && (
+                              <span className={cn(
+                                'absolute -top-2 right-0 text-[9px] font-bold px-1 rounded',
+                                isOverdue ? 'text-red-500' : 'text-amber-600'
+                              )}>
+                                {isOverdue ? 'atrasada' : 'hoje'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Minutos estimados */}
                         <div className="flex items-center">
                           <Input
@@ -380,7 +438,7 @@ export default function TasksNotionView() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDeleteTask(task.id)}
+                            onClick={() => setTaskToDelete(task.id)}
                             className="h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 opacity-0 group-hover:opacity-100 transition-opacity"
                             title="Excluir tarefa"
                           >
@@ -450,5 +508,18 @@ export default function TasksNotionView() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+
+    <ConfirmDialog
+      open={!!taskToDelete}
+      title="Excluir tarefa"
+      message="Tem certeza que deseja excluir essa tarefa? Essa ação não pode ser desfeita."
+      confirmLabel="Excluir"
+      onConfirm={() => {
+        if (taskToDelete) handleDeleteTask(taskToDelete);
+        setTaskToDelete(null);
+      }}
+      onCancel={() => setTaskToDelete(null)}
+    />
+    </>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -25,18 +26,26 @@ export function NavMain({
     items?: {
       title: string;
       url: string;
+      disabled?: boolean;
     }[];
   }[];
 }) {
+  const { pathname } = useLocation();
+
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
       <SidebarMenu>
-        {items.map((item) => (
+        {items.map((item) => {
+          const isParentActive =
+            pathname === item.url ||
+            item.items?.some((sub) => !sub.disabled && pathname === sub.url);
+
+          return (
           <Collapsible
             key={item.title}
             asChild
-            defaultOpen={item.isActive}
+            defaultOpen={isParentActive}
             className="group/collapsible"
           >
             <SidebarMenuItem>
@@ -49,20 +58,38 @@ export function NavMain({
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <SidebarMenuSub>
-                  {item.items?.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
+                  {item.items?.map((subItem) =>
+                    subItem.disabled ? (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          className="opacity-40 cursor-not-allowed pointer-events-none"
+                          title="Em breve"
+                        >
                           <span>{subItem.title}</span>
-                        </a>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
+                          <span className="ml-auto text-[10px] font-medium text-muted-foreground">
+                            em breve
+                          </span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ) : (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton
+                          asChild
+                          isActive={pathname === subItem.url}
+                        >
+                          <Link to={subItem.url}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    )
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>
           </Collapsible>
-        ))}
+          );
+        })}
       </SidebarMenu>
     </SidebarGroup>
   );

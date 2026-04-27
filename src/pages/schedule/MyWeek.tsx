@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -174,7 +174,13 @@ const formatShortDate = (dateStr: string | undefined): string => {
 export default function MyWeek() {
   const [blocks] = useState<TimeBlock[]>(loadBlocks);
   const [currentMonday, setCurrentMonday] = useState<Date>(() => getMonday(new Date()));
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0); // Para mobile
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   // Navegar semanas
   const goToPreviousWeek = () => {
@@ -346,8 +352,9 @@ export default function MyWeek() {
               })}
             </div>
 
-            {/* Grid Desktop: 7 colunas */}
-            <div className="hidden md:grid md:grid-cols-7 gap-2">
+            {/* Grid Desktop: 7 colunas — scroll unificado, colunas não rolam individualmente */}
+            <div className="hidden md:block overflow-y-auto rounded-lg" style={{ maxHeight: 'calc(100vh - 260px)' }}>
+            <div className="grid grid-cols-7 gap-2">
               {weekDates.map((day) => {
                 const dayBlocks = blocksByDay[day.value] || [];
 
@@ -376,10 +383,10 @@ export default function MyWeek() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="p-0">
-                      {/* Container com altura fixa e scroll */}
+                      {/* Container com altura total do conteúdo — o scroll é no wrapper externo */}
                       <div
-                        className="relative overflow-y-auto"
-                        style={{ height: '500px' }}
+                        className="relative"
+                        style={{ height: '1400px' }}
                       >
                         {/* Linhas de horário */}
                         <div className="absolute inset-0">
@@ -439,6 +446,25 @@ export default function MyWeek() {
                           })}
                         </div>
 
+                        {/* Linha de hora atual */}
+                        {(() => {
+                          const h = now.getHours();
+                          const m = now.getMinutes();
+                          const totalMin = h * 60 + m;
+                          if (totalMin < 6 * 60 || totalMin > 23 * 60) return null;
+                          const top = ((totalMin - 6 * 60) / 30) * 40;
+                          return (
+                            <div
+                              className="absolute left-0 right-0 z-20 pointer-events-none"
+                              style={{ top: `${top}px` }}
+                            >
+                              <div className="relative h-0.5 bg-red-500 ml-7">
+                                <div className="absolute -left-2 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Mensagem se não houver blocos */}
                         {dayBlocks.length === 0 && (
                           <div className="absolute inset-0 flex items-center justify-center">
@@ -450,6 +476,7 @@ export default function MyWeek() {
                   </Card>
                 );
               })}
+            </div>
             </div>
 
             {/* Mobile: 1 dia por vez */}

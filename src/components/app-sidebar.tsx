@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Home, Calendar, ListTodo, Clock, Settings } from 'lucide-react';
+import { Home, Calendar, ListTodo, Clock, Settings, Timer } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -53,10 +53,12 @@ const navItems = [
       {
         title: 'Conquistas',
         url: '/dashboard/conquistas',
+        disabled: true,
       },
       {
         title: 'Estatísticas',
         url: '/dashboard/estatisticas',
+        disabled: true,
       },
     ],
   },
@@ -68,10 +70,12 @@ const navItems = [
       {
         title: 'Hoje',
         url: '/semana/hoje',
+        disabled: true,
       },
       {
         title: 'Amanhã',
         url: '/semana/amanha',
+        disabled: true,
       },
       {
         title: 'Visão Semanal',
@@ -99,10 +103,12 @@ const navItems = [
       {
         title: 'Concluídas',
         url: '/tarefas/concluidas',
+        disabled: true,
       },
       {
         title: 'Por Categoria',
         url: '/tarefas/categorias',
+        disabled: true,
       },
     ],
   },
@@ -118,15 +124,26 @@ const navItems = [
       {
         title: 'Novo Horário',
         url: '/horarios/novo',
+        disabled: true,
       },
       {
         title: 'Compromissos',
         url: '/horarios/compromissos',
+        disabled: true,
       },
       {
         title: 'Repetições',
         url: '/horarios/repeticoes',
+        disabled: true,
       },
+    ],
+  },
+  {
+    title: 'Timer de Foco',
+    url: '/focus',
+    icon: Timer,
+    items: [
+      { title: 'Pomodoro', url: '/focus' },
     ],
   },
   {
@@ -137,18 +154,22 @@ const navItems = [
       {
         title: 'Perfil',
         url: '/configuracoes/perfil',
+        disabled: true,
       },
       {
         title: 'Notificações',
         url: '/configuracoes/notificacoes',
+        disabled: true,
       },
       {
         title: 'Aparência',
         url: '/configuracoes/aparencia',
+        disabled: true,
       },
       {
         title: 'Preferências TDAH',
         url: '/configuracoes/tdah',
+        disabled: true,
       },
     ],
   },

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -97,6 +98,8 @@ interface NewBlockForm {
 export default function WeeklyRoutine() {
   const [blocks, setBlocks] = useState<TimeBlock[]>(loadBlocks);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
 
   // Data de hoje formatada para input date
   const today = new Date().toISOString().split('T')[0];
@@ -202,6 +205,7 @@ export default function WeeklyRoutine() {
   }));
 
   return (
+    <>
     <SidebarProvider
       style={
         {
@@ -230,7 +234,7 @@ export default function WeeklyRoutine() {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={handleClearAll}
+                  onClick={() => setConfirmClearAll(true)}
                   disabled={blocks.length === 0}
                   className="text-red-500 hover:text-red-600"
                 >
@@ -461,7 +465,7 @@ export default function WeeklyRoutine() {
                               </div>
                             )}
                             <button
-                              onClick={() => handleRemoveBlock(block.id)}
+                              onClick={() => setBlockToDelete(block.id)}
                               className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-opacity"
                             >
                               <Trash2 className="h-3 w-3 text-red-500" />
@@ -508,5 +512,27 @@ export default function WeeklyRoutine() {
         </div>
       </SidebarInset>
     </SidebarProvider>
+
+    <ConfirmDialog
+      open={confirmClearAll}
+      title="Limpar toda a rotina"
+      message="Tem certeza que deseja remover todos os horários? Essa ação não pode ser desfeita."
+      confirmLabel="Limpar Tudo"
+      onConfirm={() => { handleClearAll(); setConfirmClearAll(false); }}
+      onCancel={() => setConfirmClearAll(false)}
+    />
+
+    <ConfirmDialog
+      open={!!blockToDelete}
+      title="Remover horário"
+      message="Tem certeza que deseja remover esse horário da sua rotina?"
+      confirmLabel="Remover"
+      onConfirm={() => {
+        if (blockToDelete) handleRemoveBlock(blockToDelete);
+        setBlockToDelete(null);
+      }}
+      onCancel={() => setBlockToDelete(null)}
+    />
+    </>
   );
 }

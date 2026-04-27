@@ -5,6 +5,8 @@ import Dashboard from '../pages/dashboard/Dashboard';
 import WeeklyRoutine from '../pages/schedule/WeeklyRoutine';
 import MyWeek from '@/pages/schedule/MyWeek';
 import TasksNotionView from '@/pages/tasks/TasksNotionView';
+import FocusTimer from '@/pages/focus/FocusTimer';
+import NotFound from '@/pages/NotFound';
 import ProtectedRoute from '../components/layout/ProtectedRoute';
 import TestLogin from '@/pages/test/TestLogin';
 import TestRegister from '@/pages/test/TestRegister';
@@ -28,9 +30,9 @@ export default function AppRoutes() {
         <Route path="/schedule/routine" element={<WeeklyRoutine />} />
         <Route path="/schedule/week" element={<MyWeek />} />
         <Route path="/tasks/notion" element={<TasksNotionView />} />
+        <Route path="/focus" element={<FocusTimer />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
-
-      <Route path="*" element={<div>Not Found</div>} />
     </Routes>
   );
 }
