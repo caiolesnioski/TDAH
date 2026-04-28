@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTasks } from '@/hooks/useTasks';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -38,13 +39,6 @@ const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'no_procras',   name: 'Sem Procrastinar',  desc: 'Complete 3 tarefas no mesmo dia que criou', icon: '🚀', xp: 45, max: 3, category: 'focus' },
 ];
 
-const loadTasks = (): Task[] => {
-  try {
-    const s = localStorage.getItem('tasks');
-    return s ? JSON.parse(s) : [];
-  } catch { return []; }
-};
-
 function getProgress(tasks: Task[], id: string): number {
   const done = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
   switch (id) {
@@ -75,7 +69,7 @@ const FILTER_LABELS: Record<Filter, string> = {
 
 export default function Conquistas() {
   const [filter, setFilter] = useState<Filter>('all');
-  const tasks = useMemo(() => loadTasks(), []);
+  const { data: tasks = [] } = useTasks();
 
   const achievements = useMemo(() =>
     ACHIEVEMENTS.map((def) => {

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTasks } from '@/hooks/useTasks';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -20,13 +21,6 @@ const CATEGORY_LABELS: Record<number, { label: string; color: string; emoji: str
 
 const DAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-const loadTasks = (): Task[] => {
-  try {
-    const s = localStorage.getItem('tasks');
-    return s ? JSON.parse(s) : [];
-  } catch { return []; }
-};
-
 type Period = '7' | '30' | '90' | 'all';
 
 function filterByPeriod(tasks: Task[], period: Period): Task[] {
@@ -39,7 +33,7 @@ function filterByPeriod(tasks: Task[], period: Period): Task[] {
 
 export default function Estatisticas() {
   const [period, setPeriod] = useState<Period>('30');
-  const allTasks = useMemo(() => loadTasks(), []);
+  const { data: allTasks = [] } = useTasks();
   const tasks = useMemo(() => filterByPeriod(allTasks, period), [allTasks, period]);
 
   const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED);

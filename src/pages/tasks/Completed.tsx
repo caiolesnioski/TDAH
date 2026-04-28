@@ -5,10 +5,11 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle2, Clock, Trophy } from 'lucide-react';
+import { CheckCircle2, Clock, Loader2, Trophy } from 'lucide-react';
 import { TaskStatus } from '@/types';
 import type { Task } from '@/types';
 import { cn } from '@/lib/utils';
+import { useTasks } from '@/hooks/useTasks';
 
 const CATEGORY_CONFIG: Record<number, { label: string; color: string; emoji: string }> = {
   0: { label: 'Estudos',  color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300', emoji: '📚' },
@@ -55,13 +56,9 @@ function groupByDay(tasks: Task[]): { label: string; date: string; tasks: Task[]
     }));
 }
 
-const loadTasks = (): Task[] => {
-  try { return JSON.parse(localStorage.getItem('tasks') ?? '[]'); } catch { return []; }
-};
-
 export default function Completed() {
+  const { data: allTasks = [], isLoading } = useTasks();
   const [catFilter, setCatFilter] = useState<number | 'all'>('all');
-  const allTasks = useMemo(() => loadTasks(), []);
 
   const completed = useMemo(() =>
     allTasks
@@ -133,8 +130,15 @@ export default function Completed() {
               ))}
             </div>
 
+            {/* Loading state */}
+            {isLoading && (
+              <div className="flex justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+              </div>
+            )}
+
             {/* Empty state */}
-            {completed.length === 0 && (
+            {!isLoading && completed.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
                 <div className="text-6xl">📭</div>
                 <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
@@ -145,7 +149,7 @@ export default function Completed() {
             )}
 
             {/* Timeline */}
-            {groups.map((group) => (
+            {!isLoading && groups.map((group) => (
               <div key={group.date} className="space-y-3">
                 <div className="flex items-center gap-3">
                   <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider capitalize">

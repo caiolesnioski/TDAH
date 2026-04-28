@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useTimeBlocks } from '@/hooks/useTimeBlocks';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -16,7 +17,6 @@ import {
   CalendarRange,
 } from 'lucide-react';
 import { TimeBlockType } from '@/types';
-import type { TimeBlock } from '@/types';
 import { cn } from '@/lib/utils';
 
 // Configuração de cores por tipo de bloco
@@ -80,19 +80,6 @@ const MONTHS_PT = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
-
-// Carregar blocos do localStorage
-const loadBlocks = (): TimeBlock[] => {
-  try {
-    const saved = localStorage.getItem('weeklyRoutine');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch {
-    // ignore
-  }
-  return [];
-};
 
 // Função para obter a segunda-feira da semana de uma data
 const getMonday = (date: Date): Date => {
@@ -172,7 +159,7 @@ const formatShortDate = (dateStr: string | undefined): string => {
 };
 
 export default function MyWeek() {
-  const [blocks] = useState<TimeBlock[]>(loadBlocks);
+  const { data: blocks = [] } = useTimeBlocks();
   const [currentMonday, setCurrentMonday] = useState<Date>(() => getMonday(new Date()));
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [now, setNow] = useState(() => new Date());

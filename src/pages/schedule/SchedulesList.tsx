@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useTimeBlocks, useDeleteTimeBlock } from '@/hooks/useTimeBlocks';
 import { useNavigate } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
@@ -8,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Plus, Trash2, Clock } from 'lucide-react';
 import { TimeBlockType } from '@/types';
-import type { TimeBlock } from '@/types';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -35,14 +35,10 @@ function timeToMin(t: string) {
   return h * 60 + m;
 }
 
-const loadBlocks = (): TimeBlock[] => {
-  try { return JSON.parse(localStorage.getItem('weeklyRoutine') ?? '[]'); } catch { return []; }
-};
-const saveBlocks = (blocks: TimeBlock[]) => localStorage.setItem('weeklyRoutine', JSON.stringify(blocks));
-
 export default function SchedulesList() {
   const navigate = useNavigate();
-  const [blocks, setBlocks] = useState<TimeBlock[]>(loadBlocks);
+  const { data: blocks = [] } = useTimeBlocks();
+  const deleteTimeBlock = useDeleteTimeBlock();
   const [filterDay, setFilterDay] = useState<number | 'all'>('all');
   const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
 
@@ -65,10 +61,10 @@ export default function SchedulesList() {
   const totalHours = blocks.reduce((s, b) => s + (timeToMin(b.endTime) - timeToMin(b.startTime)), 0) / 60;
 
   const handleDelete = (id: string) => {
-    const updated = blocks.filter((b) => b.id !== id);
-    setBlocks(updated);
-    saveBlocks(updated);
-    toast.success('Horário removido.');
+    deleteTimeBlock.mutate(id, {
+      onSuccess: () => toast.success('Horário removido.'),
+      onError: () => toast.error('Erro ao remover horário'),
+    });
   };
 
   return (

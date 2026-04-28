@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
@@ -30,97 +30,92 @@ import {
   Plus,
   Timer,
 } from 'lucide-react';
-import type { UserStats, Achievement } from '@/types';
+import { TaskStatus, TaskCategory, TaskPriority } from '@/types';
+import type { UserStats, Achievement, Task } from '@/types';
+import { useTasks } from '@/hooks/useTasks';
 
-// Dados mockados para demonstração
-const mockUserStats: UserStats = {
-  totalXP: 2450,
-  currentLevel: {
-    level: 8,
-    title: 'Focado Dedicado',
-    minXP: 2000,
-    maxXP: 3000,
-  },
-  tasksCompleted: 127,
-  tasksCompletedToday: 5,
-  currentStreak: 12,
-  longestStreak: 21,
-  totalMinutesFocused: 4320,
-  achievements: [
+const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+function computeStats(tasks: Task[]): UserStats {
+  const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
+  const today = new Date().toDateString();
+  const todayCount = completed.filter((t) => new Date(t.updatedAt).toDateString() === today).length;
+  const totalXP =
+    completed.length * 10 +
+    completed.filter((t) => t.priority === TaskPriority.HIGH).length * 5;
+
+  const currentLevel = levels.reduce((acc, l) => (totalXP >= l.minXP ? l : acc), levels[0]);
+
+  const weeklyProgress = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      day: DAY_LABELS[d.getDay()],
+      completed: completed.filter((t) => new Date(t.updatedAt).toDateString() === d.toDateString()).length,
+    };
+  });
+
+  let streak = 0;
+  const check = new Date();
+  for (let i = 0; i < 365; i++) {
+    if (!completed.some((t) => new Date(t.updatedAt).toDateString() === check.toDateString())) break;
+    streak++;
+    check.setDate(check.getDate() - 1);
+  }
+
+  const totalMinutes = completed.reduce((s, t) => s + t.estimatedMinutes, 0);
+
+  const achievements: Achievement[] = [
     {
-      id: '1',
-      title: 'Primeiro Passo',
-      description: 'Complete sua primeira tarefa',
-      icon: 'star',
-      unlockedAt: '2024-01-10',
-      progress: 1,
-      maxProgress: 1,
-      xpReward: 50,
-      category: 'tasks',
+      id: 'first_task', title: 'Primeiro Passo', description: 'Complete sua primeira tarefa',
+      icon: 'star', xpReward: 10, category: 'tasks', maxProgress: 1,
+      progress: Math.min(completed.length, 1),
+      unlockedAt: completed.length >= 1 ? completed[completed.length - 1].updatedAt : undefined,
     },
     {
-      id: '2',
-      title: 'Sequência de Fogo',
-      description: 'Mantenha uma sequência de 7 dias',
-      icon: 'flame',
-      unlockedAt: '2024-01-15',
-      progress: 7,
-      maxProgress: 7,
-      xpReward: 150,
-      category: 'streak',
+      id: 'tasks_5', title: 'Embalo', description: 'Complete 5 tarefas',
+      icon: 'trophy', xpReward: 25, category: 'tasks', maxProgress: 5,
+      progress: Math.min(completed.length, 5),
+      unlockedAt: completed.length >= 5 ? completed[completed.length - 1].updatedAt : undefined,
     },
     {
-      id: '3',
-      title: 'Mestre das Tarefas',
-      description: 'Complete 100 tarefas',
-      icon: 'trophy',
-      unlockedAt: '2024-01-20',
-      progress: 100,
-      maxProgress: 100,
-      xpReward: 300,
-      category: 'tasks',
+      id: 'tasks_25', title: 'Produtivo', description: 'Complete 25 tarefas',
+      icon: 'medal', xpReward: 75, category: 'tasks', maxProgress: 25,
+      progress: Math.min(completed.length, 25),
+      unlockedAt: completed.length >= 25 ? completed[completed.length - 1].updatedAt : undefined,
     },
     {
-      id: '4',
-      title: 'Madrugador',
-      description: 'Complete 10 tarefas antes das 9h',
-      icon: 'clock',
-      progress: 7,
-      maxProgress: 10,
-      xpReward: 200,
-      category: 'special',
+      id: 'tasks_100', title: 'Maratonista', description: 'Complete 100 tarefas',
+      icon: 'award', xpReward: 200, category: 'tasks', maxProgress: 100,
+      progress: Math.min(completed.length, 100),
+      unlockedAt: completed.length >= 100 ? completed[completed.length - 1].updatedAt : undefined,
     },
     {
-      id: '5',
-      title: 'Hiperfoco',
-      description: 'Acumule 60 horas de foco',
-      icon: 'target',
-      progress: 72,
-      maxProgress: 60,
-      xpReward: 500,
-      category: 'special',
+      id: 'streak_7', title: 'Sequência de Fogo', description: 'Mantenha uma sequência de 7 dias',
+      icon: 'flame', xpReward: 75, category: 'streak', maxProgress: 7,
+      progress: Math.min(streak, 7),
+      unlockedAt: streak >= 7 ? new Date().toISOString() : undefined,
     },
     {
-      id: '6',
-      title: 'Semana Perfeita',
-      description: 'Complete todas as tarefas por 7 dias seguidos',
-      icon: 'crown',
-      progress: 3,
-      maxProgress: 7,
-      xpReward: 400,
-      category: 'streak',
+      id: 'focus_60h', title: 'Hiperfoco', description: 'Acumule 60 horas de foco',
+      icon: 'target', xpReward: 200, category: 'special', maxProgress: 3600,
+      progress: Math.min(totalMinutes, 3600),
+      unlockedAt: totalMinutes >= 3600 ? new Date().toISOString() : undefined,
     },
-  ],
-  weeklyProgress: [
-    { day: 'Seg', completed: 4 },
-    { day: 'Ter', completed: 6 },
-    { day: 'Qua', completed: 3 },
-    { day: 'Qui', completed: 5 },
-    { day: 'Sex', completed: 7 },
-    { day: 'Sáb', completed: 2 },
-    { day: 'Dom', completed: 5 },
-  ],
-};
+  ];
+
+  return {
+    totalXP,
+    currentLevel,
+    tasksCompleted: completed.length,
+    tasksCompletedToday: todayCount,
+    currentStreak: streak,
+    longestStreak: streak,
+    totalMinutesFocused: totalMinutes,
+    achievements,
+    weeklyProgress,
+  };
+}
 
 const levels = [
   { level: 1, title: 'Iniciante', minXP: 0, maxXP: 100 },
@@ -373,8 +368,22 @@ const initialQuote = getRandomQuote();
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [stats] = useState<UserStats>(mockUserStats);
   const [quote] = useState(initialQuote);
+  const { data: tasks = [] } = useTasks();
+
+  const stats = useMemo(() => computeStats(tasks), [tasks]);
+
+  const categoryCounts = useMemo(() => {
+    const done = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
+    return {
+      study:   done.filter((t) => t.category === TaskCategory.STUDY).length,
+      work:    done.filter((t) => t.category === TaskCategory.WORK).length,
+      home:    done.filter((t) => t.category === TaskCategory.HOME).length,
+      health:  done.filter((t) => t.category === TaskCategory.HEALTH).length,
+      leisure: done.filter((t) => t.category === TaskCategory.LEISURE).length,
+      other:   done.filter((t) => t.category === TaskCategory.OTHER).length,
+    };
+  }, [tasks]);
 
   const unlockedAchievements = stats.achievements.filter((a) => a.unlockedAt);
   const inProgressAchievements = stats.achievements.filter((a) => !a.unlockedAt);
@@ -548,42 +557,12 @@ export default function Dashboard() {
                   <CardTitle className="text-gray-800 dark:text-white">Tarefas por Categoria</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <TaskCategoryCard
-                    category="Estudos"
-                    count={12}
-                    icon={BookOpen}
-                    color="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
-                  />
-                  <TaskCategoryCard
-                    category="Trabalho"
-                    count={8}
-                    icon={Briefcase}
-                    color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                  />
-                  <TaskCategoryCard
-                    category="Casa"
-                    count={5}
-                    icon={Home}
-                    color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                  />
-                  <TaskCategoryCard
-                    category="Saúde"
-                    count={3}
-                    icon={Dumbbell}
-                    color="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300"
-                  />
-                  <TaskCategoryCard
-                    category="Lazer"
-                    count={4}
-                    icon={Gamepad2}
-                    color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-                  />
-                  <TaskCategoryCard
-                    category="Outros"
-                    count={2}
-                    icon={MoreHorizontal}
-                    color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300"
-                  />
+                  <TaskCategoryCard category="Estudos"  count={categoryCounts.study}   icon={BookOpen}    color="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" />
+                  <TaskCategoryCard category="Trabalho" count={categoryCounts.work}    icon={Briefcase}   color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
+                  <TaskCategoryCard category="Casa"     count={categoryCounts.home}    icon={Home}        color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
+                  <TaskCategoryCard category="Saúde"    count={categoryCounts.health}  icon={Dumbbell}    color="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" />
+                  <TaskCategoryCard category="Lazer"    count={categoryCounts.leisure} icon={Gamepad2}    color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
+                  <TaskCategoryCard category="Outros"   count={categoryCounts.other}   icon={MoreHorizontal} color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" />
                 </CardContent>
               </Card>
             </div>

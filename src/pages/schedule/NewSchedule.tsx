@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCreateTimeBlock } from '@/hooks/useTimeBlocks';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -10,7 +11,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Check, Clock } from 'lucide-react';
 import { TimeBlockType } from '@/types';
-import type { TimeBlock } from '@/types';
 import toast from 'react-hot-toast';
 import { cn } from '@/lib/utils';
 
@@ -24,14 +24,9 @@ const BLOCK_TYPES: { type: TimeBlockType; label: string; color: string }[] = [
   { type: TimeBlockType.FIXED, label: 'Fixo',       color: 'bg-orange-500' },
 ];
 
-const generateId = () => Math.random().toString(36).substring(2, 11);
-
-const loadBlocks = (): TimeBlock[] => {
-  try { return JSON.parse(localStorage.getItem('weeklyRoutine') ?? '[]'); } catch { return []; }
-};
-
 export default function NewSchedule() {
   const navigate = useNavigate();
+  const createTimeBlock = useCreateTimeBlock();
   const [step, setStep] = useState(1);
 
   const [title, setTitle] = useState('');
@@ -53,22 +48,25 @@ export default function NewSchedule() {
   const canAdvanceStep2 = selectedDays.length > 0;
   const canSave = canAdvanceStep1 && canAdvanceStep2 && durationMin > 0;
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!canSave) { toast.error('Preencha todos os campos'); return; }
-
-    const existing = loadBlocks();
-    const newBlocks: TimeBlock[] = selectedDays.map((day) => ({
-      id: generateId(),
-      title: title.trim(),
-      type: blockType,
-      dayOfWeek: day,
-      startTime,
-      endTime,
-    }));
-
-    localStorage.setItem('weeklyRoutine', JSON.stringify([...existing, ...newBlocks]));
-    toast.success(`${newBlocks.length > 1 ? `${newBlocks.length} horários adicionados` : 'Horário adicionado'}! 🎉`);
-    navigate('/schedule/routine');
+    try {
+      await Promise.all(
+        selectedDays.map((day) =>
+          createTimeBlock.mutateAsync({
+            title: title.trim(),
+            type: blockType,
+            dayOfWeek: day,
+            startTime,
+            endTime,
+          })
+        )
+      );
+      toast.success(`${selectedDays.length > 1 ? `${selectedDays.length} horários adicionados` : 'Horário adicionado'}! 🎉`);
+      navigate('/schedule/routine');
+    } catch {
+      toast.error('Erro ao salvar horário');
+    }
   };
 
   const stepLabels = ['Detalhes', 'Dias', 'Horário'];

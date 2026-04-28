@@ -11,23 +11,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar';
-
-const getUserData = () => {
-  const storedUser = localStorage.getItem('user');
-  if (storedUser) {
-    try {
-      const user = JSON.parse(storedUser);
-      return {
-        name: user.name || 'Usuário',
-        email: user.email || 'usuario@email.com',
-        avatar: '',
-      };
-    } catch {
-      return { name: 'Usuário', email: 'usuario@email.com', avatar: '' };
-    }
-  }
-  return { name: 'Usuário', email: 'usuario@email.com', avatar: '' };
-};
+import { useAuth } from '@/context/AuthContext';
 
 const navItems = [
   {
@@ -96,11 +80,12 @@ const navItems = [
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [userData, setUserData] = React.useState(getUserData());
-
-  React.useEffect(() => {
-    setUserData(getUserData());
-  }, []);
+  const { user } = useAuth();
+  const userData = {
+    name: user?.name || 'Usuário',
+    email: user?.email || '',
+    avatar: '',
+  };
 
   return (
     <Sidebar collapsible="icon" {...props} className="sticky">

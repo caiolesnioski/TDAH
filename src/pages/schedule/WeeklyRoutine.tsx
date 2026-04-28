@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import {
   Clock,
@@ -18,11 +17,11 @@ import {
   CalendarClock,
   Save,
   RotateCcw,
-  CalendarRange,
 } from 'lucide-react';
 import { TimeBlockType } from '@/types';
-import type { TimeBlock } from '@/types';
 import { cn } from '@/lib/utils';
+import { useTimeBlocks, useCreateTimeBlock, useDeleteTimeBlock, useDeleteAllTimeBlocks } from '@/hooks/useTimeBlocks';
+import toast from 'react-hot-toast';
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Domingo', short: 'Dom' },
