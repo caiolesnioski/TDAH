@@ -75,7 +75,7 @@ const FILTER_LABELS: Record<Filter, string> = {
 
 export default function Conquistas() {
   const [filter, setFilter] = useState<Filter>('all');
-  const tasks = useMemo(loadTasks, []);
+  const tasks = useMemo(() => loadTasks(), []);
 
   const achievements = useMemo(() =>
     ACHIEVEMENTS.map((def) => {

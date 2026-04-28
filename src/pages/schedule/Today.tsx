@@ -4,7 +4,6 @@ import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Clock, CheckCircle2, Circle, CalendarDays, Zap } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
@@ -49,14 +48,12 @@ export default function Today() {
     [dayOfWeek]
   );
 
-  const pendingTasks = tasks.filter((t) => t.status !== TaskStatus.COMPLETED);
-  const doneTasks    = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
+  const doneTasks = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
   const progress = tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
   const nextBlock = blocks.find((b) => timeToMin(b.startTime) > currentMinutes);
-  const nextTask  = pendingTasks[0];
 
   const handleToggle = (id: string, complete: boolean) => {
     const updated = tasks.map((t) =>

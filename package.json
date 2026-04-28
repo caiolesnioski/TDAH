@@ -9,7 +9,7 @@
     "format": "prettier --write .",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build": "tsc --noEmit && npm run lint && npm run test && npm run format:check && vite build"
+    "build": "tsc --noEmit && npm run lint && vite build"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

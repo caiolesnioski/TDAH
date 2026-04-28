@@ -171,6 +171,11 @@ export default function TasksNotionView() {
     }
   }, []);
 
+  const today = new Date().toISOString().substring(0, 10);
+  const tomorrowD = new Date();
+  tomorrowD.setDate(tomorrowD.getDate() + 1);
+  const tomorrow = tomorrowD.toISOString().substring(0, 10);
+
   return (
     <>
     <SidebarProvider
@@ -252,8 +257,6 @@ export default function TasksNotionView() {
                     const priorityConfig = PRIORITY_CONFIG[task.priority];
                     const CategoryIcon = categoryConfig.icon;
 
-                    const today = new Date().toISOString().substring(0, 10);
-                    const tomorrow = new Date(Date.now() + 86400000).toISOString().substring(0, 10);
                     const isOverdue = !isCompleted && task.dueDate && task.dueDate < today;
                     const isDueToday = !isCompleted && task.dueDate === today;
                     const isDueTomorrow = !isCompleted && task.dueDate === tomorrow;

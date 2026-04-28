@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock, Trophy } from 'lucide-react';
-import { TaskCategory, TaskStatus } from '@/types';
+import { TaskStatus } from '@/types';
 import type { Task } from '@/types';
 import { cn } from '@/lib/utils';
 
@@ -61,7 +61,7 @@ const loadTasks = (): Task[] => {
 
 export default function Completed() {
   const [catFilter, setCatFilter] = useState<number | 'all'>('all');
-  const allTasks = useMemo(loadTasks, []);
+  const allTasks = useMemo(() => loadTasks(), []);
 
   const completed = useMemo(() =>
     allTasks

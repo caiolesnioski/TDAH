@@ -3,7 +3,6 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, CheckCircle2, Clock, Zap, BarChart2 } from 'lucide-react';
 import { TaskCategory, TaskStatus } from '@/types';
@@ -40,7 +39,7 @@ function filterByPeriod(tasks: Task[], period: Period): Task[] {
 
 export default function Estatisticas() {
   const [period, setPeriod] = useState<Period>('30');
-  const allTasks = useMemo(loadTasks, []);
+  const allTasks = useMemo(() => loadTasks(), []);
   const tasks = useMemo(() => filterByPeriod(allTasks, period), [allTasks, period]);
 
   const completed = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
