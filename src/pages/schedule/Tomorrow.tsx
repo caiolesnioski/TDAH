@@ -4,7 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Lightbulb, Clock } from 'lucide-react';
+import { Calendar, Clock, Sparkles } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
 import { cn } from '@/lib/utils';
@@ -50,6 +50,7 @@ export default function Tomorrow() {
 
   const totalBlockHours = blocks.reduce((s, b) => s + (timeToMin(b.endTime) - timeToMin(b.startTime)), 0) / 60;
   const freeHours = Math.max(0, 16 - totalBlockHours);
+  const formatHoras = (h: number) => `${parseFloat(h.toFixed(1))}h`;
 
   return (
     <SidebarProvider
@@ -64,7 +65,7 @@ export default function Tomorrow() {
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-6 text-white">
               <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="h-5 w-5 opacity-80" />
+                <Calendar className="h-5 w-5 opacity-80" />
                 <span className="text-sm opacity-80">Planejamento</span>
               </div>
               <h1 className="text-3xl font-bold">Amanhã</h1>
@@ -91,13 +92,13 @@ export default function Tomorrow() {
             {/* Resumo do dia */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Compromissos', value: blocks.length, icon: '📅' },
-                { label: 'Horas Ocupadas', value: `${totalBlockHours.toFixed(1)}h`, icon: '⏱️' },
-                { label: 'Horas Livres', value: `${freeHours.toFixed(1)}h`, icon: '🌿' },
-              ].map(({ label, value, icon }) => (
+                { label: 'Compromissos', value: blocks.length, Icon: Calendar },
+                { label: 'Horas Ocupadas', value: formatHoras(totalBlockHours), Icon: Clock },
+                { label: 'Horas Livres', value: formatHoras(freeHours), Icon: Sparkles },
+              ].map(({ label, value, Icon }) => (
                 <Card key={label} className="border-0 shadow-sm bg-white dark:bg-gray-800">
                   <CardContent className="p-3 text-center">
-                    <div className="text-xl mb-1">{icon}</div>
+                    <Icon className="h-5 w-5 mx-auto mb-1 text-gray-400" />
                     <div className="text-lg font-bold text-gray-800 dark:text-white">{value}</div>
                     <div className="text-[11px] text-gray-400">{label}</div>
                   </CardContent>
@@ -112,7 +113,7 @@ export default function Tomorrow() {
               </h2>
               {blocks.length === 0 ? (
                 <div className="text-center py-8 space-y-2">
-                  <div className="text-4xl">🌟</div>
+                  <Sparkles className="h-10 w-10 text-gray-300 mx-auto" />
                   <p className="text-sm text-gray-500">Nenhum compromisso fixo amanhã</p>
                   <p className="text-xs text-gray-400">Dia livre para focar no que quiser!</p>
                 </div>

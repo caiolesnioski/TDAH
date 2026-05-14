@@ -25,14 +25,16 @@ import {
   Package,
   Plus,
   Trash2,
-  Timer,
   ListTodo,
+  ClipboardList,
   Loader2,
 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { TaskCategory, TaskPriority, TaskStatus } from '@/types';
 import type { Task } from '@/types';
 import { cn } from '@/lib/utils';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
+import { useFocusModalStore } from '@/store/focusModalStore';
 
 const CATEGORY_CONFIG = {
   [TaskCategory.STUDY]: {
@@ -78,6 +80,7 @@ export default function TasksNotionView() {
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
+  const { openModal } = useFocusModalStore();
 
   // Local state for fast UI — synced from server
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -165,13 +168,13 @@ export default function TasksNotionView() {
 
               {/* Lista */}
               <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <div className="hidden md:grid md:grid-cols-[48px_1fr_130px_90px_120px_80px_48px_48px] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div className="hidden md:grid md:grid-cols-[48px_1fr_130px_90px_120px_80px_48px_48px] gap-2 px-4 py-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-sm font-semibold text-muted-foreground">
                   <div />
                   <div>Título</div>
                   <div>Categoria</div>
                   <div>Prioridade</div>
                   <div>Prazo</div>
-                  <div>Min</div>
+                  <div>Duração</div>
                   <div />
                   <div />
                 </div>
@@ -183,15 +186,13 @@ export default function TasksNotionView() {
                       <span>Carregando tarefas...</span>
                     </div>
                   ) : tasks.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                      <div className="text-6xl select-none">📝</div>
-                      <div className="text-center space-y-1">
-                        <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">Nenhuma tarefa ainda!</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500">Que tal começar com uma pequena? 🚀</p>
-                      </div>
-                      <Button onClick={handleAddTask} className="gap-2 bg-gradient-to-r from-focus-blue-500 to-calm-purple-500">
-                        <Plus className="h-4 w-4" /> Criar Primeira Tarefa
-                      </Button>
+                    <div className="py-8">
+                      <EmptyState
+                        icon={<ClipboardList className="h-12 w-12" />}
+                        title="Nenhuma tarefa ainda!"
+                        description="Que tal começar com uma pequena?"
+                        action={{ label: 'Criar Primeira Tarefa', onClick: handleAddTask }}
+                      />
                     </div>
                   ) : (
                     tasks.map((task) => {
@@ -232,6 +233,16 @@ export default function TasksNotionView() {
                                 isCompleted && 'line-through opacity-50 text-gray-500'
                               )}
                             />
+                            {!isCompleted && (
+                              <button
+                                onClick={() => openModal(task)}
+                                title="Iniciar foco"
+                                style={{ borderColor: '#6366F1', color: '#6366F1' }}
+                                className="shrink-0 flex items-center gap-1 px-2 py-1 text-xs rounded border hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
+                              >
+                                ▶ Iniciar
+                              </button>
+                            )}
                           </div>
 
                           {/* Categoria */}
@@ -321,14 +332,7 @@ export default function TasksNotionView() {
                             />
                           </div>
 
-                          {/* Timer (só para Estudos) */}
-                          <div className="flex items-center justify-center">
-                            {task.category === TaskCategory.STUDY && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-600 hover:bg-amber-100" title="Iniciar Pomodoro">
-                                <Timer className="h-5 w-5" />
-                              </Button>
-                            )}
-                          </div>
+                          <div />
 
                           {/* Delete */}
                           <div className="flex items-center justify-center">

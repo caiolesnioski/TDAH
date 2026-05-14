@@ -33,6 +33,8 @@ import {
 import { TaskStatus, TaskCategory, TaskPriority } from '@/types';
 import type { UserStats, Achievement, Task } from '@/types';
 import { useTasks } from '@/hooks/useTasks';
+import EmptyState from '@/components/dashboard/EmptyState';
+import { TipBanner } from '@/components/ui/TipBanner';
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -188,7 +190,7 @@ function StatCard({
   iconBg: string;
 }) {
   return (
-    <Card className={`relative overflow-hidden border-0 ${gradient}`}>
+    <Card className={`relative overflow-hidden border-0 min-h-[100px] ${gradient}`}>
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-white/10" />
       <div className="absolute bottom-0 left-0 w-24 h-24 -ml-8 -mb-8 rounded-full bg-white/5" />
       <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -214,7 +216,7 @@ function XPProgressBar({ currentXP, minXP, maxXP }: { currentXP: number; minXP: 
         style={{ width: `${Math.min(progress, 100)}%` }}
       />
       <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-xs font-bold text-gray-700 dark:text-white drop-shadow-sm">
+        <span className="text-sm font-bold text-gray-700 dark:text-white drop-shadow-sm">
           {currentXP - minXP} / {maxXP - minXP} XP
         </span>
       </div>
@@ -387,6 +389,7 @@ export default function Dashboard() {
 
   const unlockedAchievements = stats.achievements.filter((a) => a.unlockedAt);
   const inProgressAchievements = stats.achievements.filter((a) => !a.unlockedAt);
+  const hasWeeklyActivity = stats.weeklyProgress.some((d) => d.completed > 0);
 
   const nextLevel = levels.find((l) => l.level === stats.currentLevel.level + 1);
   const xpToNextLevel = nextLevel ? nextLevel.minXP - stats.totalXP : 0;
@@ -406,19 +409,17 @@ export default function Dashboard() {
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
             {/* Mensagem Motivacional */}
-            <Card className="border-0 bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white/20 rounded-2xl">
-                    <Sparkles className="h-8 w-8" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-bold mb-1">Olá! Bem-vindo de volta!</h2>
-                    <p className="text-white/90">{quote}</p>
-                  </div>
+            <div className="bg-surface border-b border-border pb-6 px-6 pt-4 rounded-lg">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-2xl">
+                  <Sparkles className="h-8 w-8 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
+                <div>
+                  <h2 className="text-xl font-bold mb-1 text-foreground">Olá! Bem-vindo de volta!</h2>
+                  <p className="text-muted-foreground">{quote}</p>
+                </div>
+              </div>
+            </div>
 
             {/* Ação Rápida */}
             <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
@@ -426,7 +427,7 @@ export default function Dashboard() {
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">
-                      O que você vai fazer hoje? 💪
+                      O que você vai fazer hoje?
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                       Suas tarefas estão esperando por você
@@ -443,9 +444,10 @@ export default function Dashboard() {
                       Foco
                     </Button>
                     <Button
+                      variant="primary"
                       size="sm"
                       onClick={() => navigate('/tasks/notion')}
-                      className="gap-1.5 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                      className="gap-1.5"
                     >
                       <Plus className="h-4 w-4" />
                       Adicionar Tarefa
@@ -547,7 +549,14 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <WeeklyProgressChart data={stats.weeklyProgress} />
+                  {hasWeeklyActivity ? (
+                    <WeeklyProgressChart data={stats.weeklyProgress} />
+                  ) : (
+                    <EmptyState
+                      icon={TrendingUp}
+                      message="Complete sua primeira tarefa para ver seu progresso aqui."
+                    />
+                  )}
                 </CardContent>
               </Card>
 
@@ -557,12 +566,23 @@ export default function Dashboard() {
                   <CardTitle className="text-gray-800 dark:text-white">Tarefas por Categoria</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <TaskCategoryCard category="Estudos"  count={categoryCounts.study}   icon={BookOpen}    color="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" />
-                  <TaskCategoryCard category="Trabalho" count={categoryCounts.work}    icon={Briefcase}   color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
-                  <TaskCategoryCard category="Casa"     count={categoryCounts.home}    icon={Home}        color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
-                  <TaskCategoryCard category="Saúde"    count={categoryCounts.health}  icon={Dumbbell}    color="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" />
-                  <TaskCategoryCard category="Lazer"    count={categoryCounts.leisure} icon={Gamepad2}    color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
-                  <TaskCategoryCard category="Outros"   count={categoryCounts.other}   icon={MoreHorizontal} color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" />
+                  {stats.tasksCompleted === 0 ? (
+                    <EmptyState
+                      icon={CheckCircle2}
+                      message="Suas tarefas por categoria aparecem aqui após você completar algumas."
+                      ctaLabel="Adicionar tarefa"
+                      onCta={() => navigate('/tasks/notion')}
+                    />
+                  ) : (
+                    <>
+                      <TaskCategoryCard category="Estudos"  count={categoryCounts.study}   icon={BookOpen}       color="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" />
+                      <TaskCategoryCard category="Trabalho" count={categoryCounts.work}    icon={Briefcase}      color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
+                      <TaskCategoryCard category="Casa"     count={categoryCounts.home}    icon={Home}           color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
+                      <TaskCategoryCard category="Saúde"    count={categoryCounts.health}  icon={Dumbbell}       color="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" />
+                      <TaskCategoryCard category="Lazer"    count={categoryCounts.leisure} icon={Gamepad2}       color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
+                      <TaskCategoryCard category="Outros"   count={categoryCounts.other}   icon={MoreHorizontal} color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" />
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -614,22 +634,9 @@ export default function Dashboard() {
             </Card>
 
             {/* Dica do Dia */}
-            <Card className="border-0 bg-gradient-to-r from-cyan-500 to-blue-500 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-white/20 rounded-2xl shrink-0">
-                    <Heart className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg mb-2">Dica para TDAH</h3>
-                    <p className="text-white/90">
-                      Divida suas tarefas grandes em pequenos passos. Isso ajuda a manter o foco e traz uma sensação de
-                      progresso constante. Cada pequena vitória conta!
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <TipBanner variant="info">
+              <strong>Dica para TDAH:</strong> Divida suas tarefas grandes em pequenos passos. Isso ajuda a manter o foco e traz uma sensação de progresso constante. Cada pequena vitória conta!
+            </TipBanner>
           </div>
         </div>
       </SidebarInset>

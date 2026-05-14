@@ -4,7 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Clock, CheckCircle2, Circle, CalendarDays, Zap } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, CalendarDays, Zap, Sun } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
 import confetti from 'canvas-confetti';
@@ -107,7 +107,7 @@ export default function Today() {
                 <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
                   <div
                     className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
-                    style={{ width: `${progress}%` }}
+                    style={{ width: tasks.length === 0 ? '0%' : `${Math.round((doneTasks.length / tasks.length) * 100)}%` }}
                   />
                 </div>
                 <p className="text-xs text-gray-500 mt-1.5">
@@ -167,8 +167,8 @@ export default function Today() {
               </h2>
               {tasks.length === 0 ? (
                 <div className="text-center py-10 space-y-2">
-                  <div className="text-5xl">🌴</div>
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">Dia livre! Aproveite 😊</p>
+                  <Sun className="h-12 w-12 text-gray-300 mx-auto" />
+                  <p className="font-semibold text-gray-700 dark:text-gray-300">Dia livre! Aproveite</p>
                   <p className="text-sm text-gray-400">Nenhuma tarefa para hoje</p>
                 </div>
               ) : (
