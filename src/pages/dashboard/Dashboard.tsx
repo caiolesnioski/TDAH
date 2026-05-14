@@ -1,9 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -190,20 +186,20 @@ function StatCard({
   iconBg: string;
 }) {
   return (
-    <Card className={`relative overflow-hidden border-0 min-h-[100px] ${gradient}`}>
+    <div className={`relative overflow-hidden rounded-xl min-h-[100px] ${gradient}`}>
       <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-white/10" />
       <div className="absolute bottom-0 left-0 w-24 h-24 -ml-8 -mb-8 rounded-full bg-white/5" />
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-white/90">{title}</CardTitle>
+      <div className="flex flex-row items-center justify-between p-4 pb-2">
+        <span className="text-sm font-medium text-white/90">{title}</span>
         <div className={`p-2 rounded-xl ${iconBg}`}>
           <Icon className="h-5 w-5 text-white" />
         </div>
-      </CardHeader>
-      <CardContent>
+      </div>
+      <div className="px-4 pb-4">
         <div className="text-3xl font-bold text-white">{value}</div>
         {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -395,19 +391,7 @@ export default function Dashboard() {
   const xpToNextLevel = nextLevel ? nextLevel.minXP - stats.totalXP : 0;
 
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
             {/* Mensagem Motivacional */}
             <div className="bg-surface border-b border-border pb-6 px-6 pt-4 rounded-lg">
               <div className="flex items-center gap-4">
@@ -422,8 +406,7 @@ export default function Dashboard() {
             </div>
 
             {/* Ação Rápida */}
-            <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
-              <CardContent className="p-4">
+            <div className="bg-base-200 rounded-xl border border-base-300 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-800 dark:text-white">
@@ -454,12 +437,10 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </div>
 
             {/* Nível e XP */}
-            <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
-              <CardContent className="p-6">
+            <div className="bg-base-200 rounded-xl border border-base-300 p-6">
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
                   <div className="flex items-center gap-4">
                     <div className="relative">
@@ -493,8 +474,7 @@ export default function Dashboard() {
                     <XPProgressBar currentXP={stats.totalXP} minXP={stats.currentLevel.minXP} maxXP={stats.currentLevel.maxXP} />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+            </div>
 
             {/* Cards de Estatísticas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -535,20 +515,20 @@ export default function Dashboard() {
             {/* Grid de Conteúdo */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Progresso Semanal */}
-              <Card className="lg:col-span-2 border-0 shadow-lg bg-white dark:bg-gray-800">
-                <CardHeader>
+              <div className="lg:col-span-2 bg-base-200 rounded-xl border border-base-300">
+                <div className="p-5 pb-0">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-white">
+                    <h2 className="flex items-center gap-2 font-semibold text-base-content">
                       <TrendingUp className="h-5 w-5 text-emerald-500" />
                       Progresso Semanal
-                    </CardTitle>
+                    </h2>
                     <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                       <Calendar className="h-3 w-3 mr-1" />
                       Esta semana
                     </Badge>
                   </div>
-                </CardHeader>
-                <CardContent>
+                </div>
+                <div className="p-5">
                   {hasWeeklyActivity ? (
                     <WeeklyProgressChart data={stats.weeklyProgress} />
                   ) : (
@@ -557,15 +537,15 @@ export default function Dashboard() {
                       message="Complete sua primeira tarefa para ver seu progresso aqui."
                     />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {/* Tarefas por Categoria */}
-              <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
-                <CardHeader>
-                  <CardTitle className="text-gray-800 dark:text-white">Tarefas por Categoria</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
+              <div className="bg-base-200 rounded-xl border border-base-300">
+                <div className="p-5 pb-0">
+                  <h2 className="font-semibold text-base-content">Tarefas por Categoria</h2>
+                </div>
+                <div className="p-5 space-y-3">
                   {stats.tasksCompleted === 0 ? (
                     <EmptyState
                       icon={CheckCircle2}
@@ -583,24 +563,24 @@ export default function Dashboard() {
                       <TaskCategoryCard category="Outros"   count={categoryCounts.other}   icon={MoreHorizontal} color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" />
                     </>
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Seção de Conquistas */}
-            <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
-              <CardHeader>
+            <div className="bg-base-200 rounded-xl border border-base-300">
+              <div className="p-5 pb-0">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-white">
+                  <h2 className="flex items-center gap-2 font-semibold text-base-content">
                     <Award className="h-5 w-5 text-amber-500" />
                     Suas Conquistas
-                  </CardTitle>
+                  </h2>
                   <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
                     {unlockedAchievements.length} de {stats.achievements.length} desbloqueadas
                   </Badge>
                 </div>
-              </CardHeader>
-              <CardContent>
+              </div>
+              <div className="p-5">
                 {/* Conquistas Desbloqueadas */}
                 {unlockedAchievements.length > 0 && (
                   <div className="mb-6">
@@ -630,16 +610,13 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Dica do Dia */}
             <TipBanner variant="info">
               <strong>Dica para TDAH:</strong> Divida suas tarefas grandes em pequenos passos. Isso ajuda a manter o foco e traz uma sensação de progresso constante. Cada pequena vitória conta!
             </TipBanner>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }

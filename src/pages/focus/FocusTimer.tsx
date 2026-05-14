@@ -1,7 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
@@ -172,9 +169,6 @@ export default function FocusTimer() {
               </CardContent>
             </Card>
 
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }

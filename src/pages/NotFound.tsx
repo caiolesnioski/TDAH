@@ -1,7 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Home, ListTodo, Calendar, Clock } from 'lucide-react';
 
@@ -76,9 +73,6 @@ export default function NotFound() {
                 </Button>
               </div>
             </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }

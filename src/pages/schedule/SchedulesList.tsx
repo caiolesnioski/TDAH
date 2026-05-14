@@ -1,9 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useTimeBlocks, useDeleteTimeBlock } from '@/hooks/useTimeBlocks';
 import { useNavigate } from 'react-router-dom';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';

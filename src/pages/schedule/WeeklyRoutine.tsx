@@ -1,8 +1,5 @@
 import { useState } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -505,10 +502,7 @@ export default function WeeklyRoutine() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
 
     <ConfirmDialog
       open={confirmClearAll}

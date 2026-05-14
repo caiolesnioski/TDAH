@@ -1,7 +1,4 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -104,14 +101,7 @@ export default function ByCategory() {
   }, [newTitle, createTask]);
 
   return (
-    <SidebarProvider
-      style={{ '--sidebar-width': 'calc(var(--spacing) * 72)', '--header-height': 'calc(var(--spacing) * 12)' } as React.CSSProperties}
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
 
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Tarefas por Categoria</h1>

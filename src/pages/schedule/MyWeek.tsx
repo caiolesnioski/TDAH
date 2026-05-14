@@ -1,8 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -606,9 +603,6 @@ export default function MyWeek() {
                 );
               })()}
             </div>
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }
