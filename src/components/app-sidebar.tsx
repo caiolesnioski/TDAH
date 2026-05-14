@@ -13,68 +13,87 @@ import {
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 
-const navItems = [
+const navSections = [
   {
-    title: 'Dashboard',
-    url: '/dashboard',
-    icon: Home,
-    isActive: true,
+    label: 'PLANEJAMENTO',
     items: [
-      { title: 'Visão Geral',  url: '/dashboard' },
-      { title: 'Conquistas',   url: '/dashboard/conquistas' },
-      { title: 'Estatísticas', url: '/dashboard/estatisticas' },
+      {
+        title: 'Dashboard',
+        url: '/dashboard',
+        icon: Home,
+        items: [
+          { title: 'Visão Geral',  url: '/dashboard' },
+          { title: 'Conquistas',   url: '/dashboard/conquistas' },
+          { title: 'Estatísticas', url: '/dashboard/estatisticas' },
+        ],
+      },
+      {
+        title: 'Minha Semana',
+        url: '/schedule/week',
+        icon: Calendar,
+        items: [
+          { title: 'Hoje',          url: '/schedule/today' },
+          { title: 'Amanhã',        url: '/schedule/tomorrow' },
+          { title: 'Visão Semanal', url: '/schedule/week' },
+          { title: 'Calendário',    url: '/schedule/week' },
+        ],
+      },
     ],
   },
   {
-    title: 'Minha Semana',
-    url: '/schedule/week',
-    icon: Calendar,
+    label: 'TAREFAS',
     items: [
-      { title: 'Hoje',          url: '/schedule/today' },
-      { title: 'Amanhã',        url: '/schedule/tomorrow' },
-      { title: 'Visão Semanal', url: '/schedule/week' },
-      { title: 'Calendário',    url: '/schedule/week' },
+      {
+        title: 'Lista de Tarefas',
+        url: '/tasks/notion',
+        icon: ListTodo,
+        items: [
+          { title: 'Todas as Tarefas', url: '/tasks/notion' },
+          { title: 'Nova Tarefa',      url: '/tasks/notion' },
+          { title: 'Concluídas',       url: '/tasks/completed' },
+          { title: 'Por Categoria',    url: '/tasks/by-category' },
+        ],
+      },
     ],
   },
   {
-    title: 'Lista de Tarefas',
-    url: '/tasks/notion',
-    icon: ListTodo,
+    label: 'FOCO',
     items: [
-      { title: 'Todas as Tarefas', url: '/tasks/notion' },
-      { title: 'Nova Tarefa',      url: '/tasks/notion' },
-      { title: 'Concluídas',       url: '/tasks/completed' },
-      { title: 'Por Categoria',    url: '/tasks/by-category' },
+      {
+        title: 'Timer de Foco',
+        url: '/focus',
+        icon: Timer,
+        items: [
+          { title: 'Pomodoro', url: '/focus' },
+        ],
+      },
+      {
+        title: 'Horários Fixos',
+        url: '/schedule/list',
+        icon: Clock,
+        items: [
+          { title: 'Minha Rotina',  url: '/schedule/routine' },
+          { title: 'Novo Horário',  url: '/schedule/new' },
+          { title: 'Compromissos',  url: '/schedule/list' },
+          { title: 'Repetições',    url: '/schedule/routine', disabled: true },
+        ],
+      },
     ],
   },
   {
-    title: 'Horários Fixos',
-    url: '/schedule/list',
-    icon: Clock,
+    label: 'PERFIL',
     items: [
-      { title: 'Minha Rotina',  url: '/schedule/routine' },
-      { title: 'Novo Horário',  url: '/schedule/new' },
-      { title: 'Compromissos',  url: '/schedule/list' },
-      { title: 'Repetições',    url: '/schedule/routine', disabled: true },
-    ],
-  },
-  {
-    title: 'Timer de Foco',
-    url: '/focus',
-    icon: Timer,
-    items: [
-      { title: 'Pomodoro', url: '/focus' },
-    ],
-  },
-  {
-    title: 'Configurações',
-    url: '/settings/profile',
-    icon: Settings,
-    items: [
-      { title: 'Perfil',            url: '/settings/profile' },
-      { title: 'Notificações',      url: '/settings/notifications' },
-      { title: 'Aparência',         url: '/settings/profile', disabled: true },
-      { title: 'Preferências TDAH', url: '/settings/tdah' },
+      {
+        title: 'Configurações',
+        url: '/settings/profile',
+        icon: Settings,
+        items: [
+          { title: 'Perfil',            url: '/settings/profile' },
+          { title: 'Notificações',      url: '/settings/notifications' },
+          { title: 'Aparência',         url: '/settings/profile', disabled: true },
+          { title: 'Preferências TDAH', url: '/settings/tdah' },
+        ],
+      },
     ],
   },
 ];
@@ -93,7 +112,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <BrandLogo />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navItems} />
+        <NavMain sections={navSections} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
