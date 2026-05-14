@@ -18,6 +18,8 @@ import Profile from '@/pages/settings/Profile';
 import Notifications from '@/pages/settings/Notifications';
 import TdahPreferences from '@/pages/settings/TdahPreferences';
 import NotFound from '@/pages/NotFound';
+import Onboarding from '@/pages/onboarding/Onboarding';
+import WeeklyPlanning from '@/pages/planning/WeeklyPlanning';
 import ProtectedRoute from '../components/layout/ProtectedRoute';
 import TestLogin from '@/pages/test/TestLogin';
 import TestRegister from '@/pages/test/TestRegister';
@@ -36,6 +38,9 @@ export default function AppRoutes() {
       <Route path="/test-dashboard" element={<TestDashboard />} />
 
       <Route element={<ProtectedRoute />}>
+        {/* Onboarding */}
+        <Route path="/onboarding" element={<Onboarding />} />
+
         {/* Dashboard */}
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/conquistas" element={<Conquistas />} />
@@ -53,6 +58,9 @@ export default function AppRoutes() {
         <Route path="/tasks/notion" element={<TasksNotionView />} />
         <Route path="/tasks/completed" element={<Completed />} />
         <Route path="/tasks/by-category" element={<ByCategory />} />
+
+        {/* Planejamento */}
+        <Route path="/planning/weekly" element={<WeeklyPlanning />} />
 
         {/* Foco */}
         <Route path="/focus" element={<FocusTimer />} />

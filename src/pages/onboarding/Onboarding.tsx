@@ -1,611 +1,664 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Badge } from '@/components/ui/badge';
 import {
-  Brain,
-  Sparkles,
-  Briefcase,
-  GraduationCap,
-  CalendarClock,
   ChevronRight,
   ChevronLeft,
-  Plus,
-  Trash2,
-  Check,
+  Sparkles,
+  Target,
+  Calendar,
+  TrendingUp,
+  Bell,
+  Trophy,
   Clock,
-  Rocket,
+  CheckCircle2,
 } from 'lucide-react';
-import { TimeBlockType } from '@/types';
-import type { TimeBlock, OnboardingData } from '@/types';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/context/AuthContext';
+import { useUpsertPreferences } from '@/hooks/usePreferences';
+import { useCreateTask } from '@/hooks/useTasks';
+import { TaskPriority, TaskCategory } from '@/types';
+import toast from 'react-hot-toast';
 
-const DAYS_OF_WEEK = [
-  { value: 1, label: 'Segunda', short: 'Seg' },
-  { value: 2, label: 'Terça', short: 'Ter' },
-  { value: 3, label: 'Quarta', short: 'Qua' },
-  { value: 4, label: 'Quinta', short: 'Qui' },
-  { value: 5, label: 'Sexta', short: 'Sex' },
-  { value: 6, label: 'Sábado', short: 'Sáb' },
-  { value: 0, label: 'Domingo', short: 'Dom' },
-];
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-const STEPS = [
-  { id: 1, title: 'Bem-vindo', icon: Sparkles },
-  { id: 2, title: 'Trabalho', icon: Briefcase },
-  { id: 3, title: 'Aulas', icon: GraduationCap },
-  { id: 4, title: 'Compromissos', icon: CalendarClock },
-];
+type MotivationStyle = '' | 'competition' | 'progress' | 'reminders' | 'celebration';
+type HasCommitments = 'yes' | 'no' | 'unknown';
 
-// Gera ID único
-const generateId = () => Math.random().toString(36).substring(2, 9);
-
-// Step 1: Welcome
-function StepWelcome({ onNext }: { onNext: () => void }) {
-  return (
-    <div className="flex flex-col items-center text-center space-y-6 py-8">
-      <div className="w-24 h-24 rounded-full bg-gradient-to-br from-focus-blue-500 to-calm-purple-500 flex items-center justify-center">
-        <Brain className="w-12 h-12 text-white" />
-      </div>
-
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-white">
-          Bem-vindo ao TDAH Manager!
-        </h1>
-        <p className="text-lg text-gray-600 dark:text-gray-300 max-w-md">
-          Vamos configurar sua rotina para ajudar você a organizar melhor seu dia a dia.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-2xl mt-8">
-        <Card className="border-2 border-focus-blue-200 dark:border-focus-blue-800 bg-focus-blue-50 dark:bg-focus-blue-900/20">
-          <CardContent className="p-4 text-center">
-            <Briefcase className="w-8 h-8 mx-auto mb-2 text-focus-blue-500" />
-            <h3 className="font-semibold text-gray-800 dark:text-white">Trabalho</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Configure seus horários de trabalho</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-energy-orange-200 dark:border-energy-orange-800 bg-energy-orange-50 dark:bg-energy-orange-900/20">
-          <CardContent className="p-4 text-center">
-            <GraduationCap className="w-8 h-8 mx-auto mb-2 text-energy-orange-500" />
-            <h3 className="font-semibold text-gray-800 dark:text-white">Aulas</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Adicione suas aulas e estudos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-calm-purple-200 dark:border-calm-purple-800 bg-calm-purple-50 dark:bg-calm-purple-900/20">
-          <CardContent className="p-4 text-center">
-            <CalendarClock className="w-8 h-8 mx-auto mb-2 text-calm-purple-500" />
-            <h3 className="font-semibold text-gray-800 dark:text-white">Compromissos</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Marque seus compromissos fixos</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="bg-success-green-50 dark:bg-success-green-900/20 border border-success-green-200 dark:border-success-green-800 rounded-xl p-4 max-w-md">
-        <p className="text-sm text-success-green-700 dark:text-success-green-300">
-          <Sparkles className="w-4 h-4 inline mr-2" />
-          Leva apenas <strong>2 minutos</strong> para configurar. Você pode ajustar tudo depois!
-        </p>
-      </div>
-
-      <Button size="lg" onClick={onNext} className="mt-4 bg-gradient-to-r from-focus-blue-500 to-calm-purple-500 hover:from-focus-blue-600 hover:to-calm-purple-600">
-        Começar Configuração
-        <ChevronRight className="w-5 h-5 ml-2" />
-      </Button>
-    </div>
-  );
+interface OnboardingState {
+  goals: string[];
+  wakeTime: string;
+  sleepHours: number;
+  hasCommitments: HasCommitments;
+  motivationStyle: MotivationStyle;
+  firstTaskDesc: string;
+  firstTaskMinutes: number;
+  firstTaskPriority: TaskPriority;
 }
 
-// Color class mappings for Tailwind (classes must be complete, not dynamic)
-const colorClasses = {
-  blue: {
-    enabled: 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20',
-  },
-  orange: {
-    enabled: 'border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20',
-  },
+const DEFAULT_STATE: OnboardingState = {
+  goals: [],
+  wakeTime: '07:00',
+  sleepHours: 8,
+  hasCommitments: 'unknown',
+  motivationStyle: '',
+  firstTaskDesc: '',
+  firstTaskMinutes: 30,
+  firstTaskPriority: TaskPriority.MEDIUM,
 };
 
-// Schedule Table Component (used for Work and Class steps)
-interface ScheduleTableProps {
-  schedules: { [day: number]: { enabled: boolean; startTime: string; endTime: string } };
-  onChange: (day: number, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => void;
-  colorScheme: 'blue' | 'orange';
-}
+const STEP_LABELS = ['Boas-vindas', 'Objetivos', 'Perfil', 'Motivação', 'Primeira tarefa'];
 
-function ScheduleTable({ schedules, onChange, colorScheme }: ScheduleTableProps) {
-  const activeClass = colorClasses[colorScheme].enabled;
+const GOAL_OPTIONS = [
+  { id: 'procrastination', label: 'Quero parar de procrastinar' },
+  { id: 'starting', label: 'Tenho dificuldade em começar tarefas' },
+  { id: 'forgetfulness', label: 'Esqueço coisas importantes' },
+  { id: 'long_goals', label: 'Quero acompanhar metas de longo prazo' },
+  { id: 'organization', label: 'Quero me organizar melhor no geral' },
+];
 
+const MOTIVATION_OPTIONS = [
+  { id: 'competition', icon: Trophy, label: 'Competição e recordes', desc: 'Gosto de bater minhas marcas e ver ranking' },
+  { id: 'progress', icon: TrendingUp, label: 'Ver meu progresso', desc: 'Prefiro gráficos e barras de progresso' },
+  { id: 'reminders', icon: Bell, label: 'Lembretes frequentes', desc: 'Preciso ser lembrado(a) constantemente' },
+  { id: 'celebration', icon: Sparkles, label: 'Celebrar conquistas', desc: 'Quero comemorar cada vitória, por menor que seja' },
+];
+
+const TIME_OPTIONS = [
+  { label: '15 min', value: 15 },
+  { label: '30 min', value: 30 },
+  { label: '1 hora', value: 60 },
+  { label: '2 horas', value: 120 },
+];
+
+const PRIORITY_OPTIONS: { label: string; value: TaskPriority; defaultCls: string }[] = [
+  { label: 'Baixa', value: TaskPriority.LOW, defaultCls: 'hover:border-gray-400' },
+  { label: 'Média', value: TaskPriority.MEDIUM, defaultCls: 'hover:border-yellow-400' },
+  { label: 'Alta', value: TaskPriority.HIGH, defaultCls: 'hover:border-red-400' },
+];
+
+const PRIORITY_SELECTED: Record<TaskPriority, string> = {
+  [TaskPriority.LOW]: 'border-gray-500 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300',
+  [TaskPriority.MEDIUM]: 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300',
+  [TaskPriority.HIGH]: 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
+};
+
+// ---------------------------------------------------------------------------
+// Progress bar
+// ---------------------------------------------------------------------------
+
+function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
-    <div className="space-y-3">
-      {DAYS_OF_WEEK.map((day) => {
-        const schedule = schedules[day.value] || { enabled: false, startTime: '09:00', endTime: '18:00' };
-        const isEnabled = schedule.enabled;
-
-        return (
-          <div
-            key={day.value}
-            className={cn(
-              'flex items-center gap-4 p-3 rounded-xl border-2 transition-all',
-              isEnabled
-                ? activeClass
-                : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50'
-            )}
-          >
-            <div className="flex items-center gap-3 w-32">
-              <Switch
-                checked={isEnabled}
-                onCheckedChange={(checked) => onChange(day.value, 'enabled', checked)}
-              />
-              <span className={cn('font-medium', isEnabled ? 'text-gray-800 dark:text-white' : 'text-gray-400')}>
-                {day.label}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2 flex-1">
-              <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-500 dark:text-gray-400">De:</Label>
-                <Input
-                  type="time"
-                  value={schedule.startTime}
-                  onChange={(e) => onChange(day.value, 'startTime', e.target.value)}
-                  disabled={!isEnabled}
-                  className="w-28"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Label className="text-sm text-gray-500 dark:text-gray-400">Até:</Label>
-                <Input
-                  type="time"
-                  value={schedule.endTime}
-                  onChange={(e) => onChange(day.value, 'endTime', e.target.value)}
-                  disabled={!isEnabled}
-                  className="w-28"
-                />
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// Step 2: Work Schedule
-interface StepWorkProps {
-  schedules: { [day: number]: { enabled: boolean; startTime: string; endTime: string } };
-  onChange: (day: number, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => void;
-}
-
-function StepWork({ schedules, onChange }: StepWorkProps) {
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-full bg-focus-blue-100 dark:bg-focus-blue-900/30 flex items-center justify-center mx-auto">
-          <Briefcase className="w-8 h-8 text-focus-blue-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Horários de Trabalho</h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Em quais dias e horários você trabalha? Ative os dias que se aplicam.
-        </p>
+    <div className="px-6 pt-6 pb-2">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          Passo {step} de {total}
+        </span>
+        <span className="text-xs font-medium text-violet-600 dark:text-violet-400">
+          {STEP_LABELS[step - 1]}
+        </span>
       </div>
-
-      <ScheduleTable schedules={schedules} onChange={onChange} colorScheme="blue" />
-
-      <div className="bg-focus-blue-50 dark:bg-focus-blue-900/20 border border-focus-blue-200 dark:border-focus-blue-800 rounded-xl p-4">
-        <p className="text-sm text-focus-blue-700 dark:text-focus-blue-300">
-          <Clock className="w-4 h-4 inline mr-2" />
-          Não se preocupe se seus horários variam. Você pode configurar isso como sua rotina mais comum.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Step 3: Class Schedule
-interface StepClassProps {
-  schedules: { [day: number]: { enabled: boolean; startTime: string; endTime: string } };
-  onChange: (day: number, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => void;
-}
-
-function StepClass({ schedules, onChange }: StepClassProps) {
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-full bg-energy-orange-100 dark:bg-energy-orange-900/30 flex items-center justify-center mx-auto">
-          <GraduationCap className="w-8 h-8 text-energy-orange-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Horários de Aula</h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Você estuda ou faz algum curso? Configure seus horários de aula.
-        </p>
-      </div>
-
-      <ScheduleTable schedules={schedules} onChange={onChange} colorScheme="orange" />
-
-      <div className="bg-energy-orange-50 dark:bg-energy-orange-900/20 border border-energy-orange-200 dark:border-energy-orange-800 rounded-xl p-4">
-        <p className="text-sm text-energy-orange-700 dark:text-energy-orange-300">
-          <GraduationCap className="w-4 h-4 inline mr-2" />
-          Se você não estuda atualmente, pode pular esta etapa deixando todos os dias desativados.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Step 4: Fixed Commitments
-interface Commitment {
-  id: string;
-  title: string;
-  dayOfWeek: number;
-  startTime: string;
-  endTime: string;
-}
-
-interface StepCommitmentsProps {
-  commitments: Commitment[];
-  onAdd: (commitment: Commitment) => void;
-  onRemove: (id: string) => void;
-}
-
-function StepCommitments({ commitments, onAdd, onRemove }: StepCommitmentsProps) {
-  const [newCommitment, setNewCommitment] = useState<Omit<Commitment, 'id'>>({
-    title: '',
-    dayOfWeek: 1,
-    startTime: '10:00',
-    endTime: '11:00',
-  });
-
-  const handleAdd = () => {
-    if (!newCommitment.title.trim()) return;
-
-    onAdd({
-      id: generateId(),
-      ...newCommitment,
-    });
-
-    setNewCommitment({
-      title: '',
-      dayOfWeek: 1,
-      startTime: '10:00',
-      endTime: '11:00',
-    });
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center space-y-2">
-        <div className="w-16 h-16 rounded-full bg-calm-purple-100 dark:bg-calm-purple-900/30 flex items-center justify-center mx-auto">
-          <CalendarClock className="w-8 h-8 text-calm-purple-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Compromissos Fixos</h2>
-        <p className="text-gray-600 dark:text-gray-300">
-          Tem compromissos que se repetem toda semana? Academia, terapia, reuniões fixas...
-        </p>
-      </div>
-
-      {/* Add new commitment form */}
-      <Card className="border-2 border-dashed border-calm-purple-300 dark:border-calm-purple-700">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Plus className="w-5 h-5 text-calm-purple-500" />
-            Adicionar Compromisso
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Nome do compromisso</Label>
-              <Input
-                id="title"
-                placeholder="Ex: Academia, Terapia, Reunião..."
-                value={newCommitment.title}
-                onChange={(e) => setNewCommitment({ ...newCommitment, title: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="day">Dia da semana</Label>
-              <select
-                id="day"
-                value={newCommitment.dayOfWeek}
-                onChange={(e) => setNewCommitment({ ...newCommitment, dayOfWeek: Number(e.target.value) })}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                {DAYS_OF_WEEK.map((day) => (
-                  <option key={day.value} value={day.value}>
-                    {day.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start">Hora início</Label>
-              <Input
-                id="start"
-                type="time"
-                value={newCommitment.startTime}
-                onChange={(e) => setNewCommitment({ ...newCommitment, startTime: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="end">Hora fim</Label>
-              <Input
-                id="end"
-                type="time"
-                value={newCommitment.endTime}
-                onChange={(e) => setNewCommitment({ ...newCommitment, endTime: e.target.value })}
-              />
-            </div>
-          </div>
-          <Button
-            type="button"
-            onClick={handleAdd}
-            disabled={!newCommitment.title.trim()}
-            className="w-full bg-calm-purple-500 hover:bg-calm-purple-600"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Compromisso
-          </Button>
-        </CardContent>
-      </Card>
-
-      {/* List of commitments */}
-      {commitments.length > 0 ? (
-        <div className="space-y-2">
-          <Label className="text-sm text-gray-500">Seus compromissos ({commitments.length})</Label>
-          <div className="space-y-2">
-            {commitments.map((commitment) => {
-              const day = DAYS_OF_WEEK.find((d) => d.value === commitment.dayOfWeek);
-              return (
-                <div
-                  key={commitment.id}
-                  className="flex items-center justify-between p-3 rounded-xl border border-calm-purple-200 dark:border-calm-purple-800 bg-calm-purple-50 dark:bg-calm-purple-900/20"
-                >
-                  <div className="flex items-center gap-3">
-                    <Badge className="bg-calm-purple-500">{day?.short}</Badge>
-                    <div>
-                      <p className="font-medium text-gray-800 dark:text-white">{commitment.title}</p>
-                      <p className="text-sm text-gray-500">
-                        {commitment.startTime} - {commitment.endTime}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onRemove(commitment.id)}
-                    className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <CalendarClock className="w-12 h-12 mx-auto mb-2 opacity-30" />
-          <p>Nenhum compromisso adicionado ainda.</p>
-          <p className="text-sm">Você pode pular esta etapa se não tiver compromissos fixos.</p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Progress Indicator
-function ProgressIndicator({ currentStep, totalSteps }: { currentStep: number; totalSteps: number }) {
-  const progress = (currentStep / totalSteps) * 100;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
-        {STEPS.map((step) => {
-          const isCompleted = currentStep > step.id;
-          const isCurrent = currentStep === step.id;
-          const Icon = step.icon;
-
-          return (
-            <div key={step.id} className="flex flex-col items-center">
-              <div
-                className={cn(
-                  'w-10 h-10 rounded-full flex items-center justify-center transition-all',
-                  isCompleted && 'bg-success-green-500 text-white',
-                  isCurrent && 'bg-focus-blue-500 text-white ring-4 ring-focus-blue-200 dark:ring-focus-blue-800',
-                  !isCompleted && !isCurrent && 'bg-gray-200 dark:bg-gray-700 text-gray-400'
-                )}
-              >
-                {isCompleted ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
-              </div>
-              <span
-                className={cn(
-                  'text-xs mt-1 font-medium',
-                  isCurrent ? 'text-focus-blue-600 dark:text-focus-blue-400' : 'text-gray-500'
-                )}
-              >
-                {step.title}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
         <div
-          className="h-full bg-gradient-to-r from-focus-blue-500 to-calm-purple-500 transition-all duration-500"
-          style={{ width: `${progress}%` }}
+          className="h-full bg-gradient-to-r from-violet-500 to-purple-400 rounded-full transition-all duration-500"
+          style={{ width: `${(step / total) * 100}%` }}
         />
       </div>
     </div>
   );
 }
 
-// Main Onboarding Component
+// ---------------------------------------------------------------------------
+// Step 1 — Welcome
+// ---------------------------------------------------------------------------
+
+function Step1Welcome({ name, onNext }: { name: string; onNext: () => void }) {
+  return (
+    <div className="flex flex-col items-center text-center gap-6 py-4 animate-fade-in">
+      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+        <Sparkles className="w-10 h-10 text-white" />
+      </div>
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+          Olá, {name}! Seja bem-vindo(a) 👋
+        </h1>
+        <p className="text-gray-600 dark:text-gray-300 max-w-sm">
+          Vamos deixar tudo do seu jeito em menos de 2 minutos.
+        </p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+          Antes de começar, queremos entender melhor como podemos te ajudar.
+        </p>
+      </div>
+      <Button
+        size="lg"
+        onClick={onNext}
+        className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white gap-2"
+      >
+        Vamos lá
+        <ChevronRight className="w-5 h-5" />
+      </Button>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 2 — Goals
+// ---------------------------------------------------------------------------
+
+function Step2Goals({
+  goals,
+  onChange,
+  onNext,
+  onBack,
+}: {
+  goals: string[];
+  onChange: (v: string[]) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  const toggle = (id: string) =>
+    onChange(goals.includes(id) ? goals.filter((g) => g !== id) : [...goals, id]);
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">O que te trouxe até aqui?</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">Pode escolher mais de um</p>
+      </div>
+
+      <div className="space-y-2">
+        {GOAL_OPTIONS.map((opt) => {
+          const selected = goals.includes(opt.id);
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => toggle(opt.id)}
+              className={cn(
+                'w-full text-left px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium min-h-[44px]',
+                selected
+                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+              )}
+            >
+              <span className="flex items-center gap-3">
+                <span
+                  className={cn(
+                    'w-5 h-5 rounded border-2 flex items-center justify-center shrink-0',
+                    selected ? 'border-violet-500 bg-violet-500' : 'border-gray-300 dark:border-gray-600'
+                  )}
+                >
+                  {selected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                </span>
+                {opt.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-between pt-4 border-t">
+        <Button variant="outline" onClick={onBack}>
+          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+        </Button>
+        <Button
+          onClick={onNext}
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white gap-1"
+        >
+          Continuar <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 3 — Profile
+// ---------------------------------------------------------------------------
+
+function Step3Profile({
+  wakeTime,
+  sleepHours,
+  hasCommitments,
+  onWakeTime,
+  onSleepHours,
+  onCommitments,
+  onNext,
+  onBack,
+}: {
+  wakeTime: string;
+  sleepHours: number;
+  hasCommitments: HasCommitments;
+  onWakeTime: (v: string) => void;
+  onSleepHours: (v: number) => void;
+  onCommitments: (v: HasCommitments) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="text-center">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">Como você organiza seu tempo?</h2>
+      </div>
+
+      <div className="space-y-5">
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <Clock className="w-4 h-4 text-violet-500" />
+            Horário que costuma acordar
+          </Label>
+          <Input
+            type="time"
+            value={wakeTime}
+            onChange={(e) => onWakeTime(e.target.value)}
+            className="w-36"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <Target className="w-4 h-4 text-violet-500" />
+            Horas de sono que precisa:{' '}
+            <span className="font-bold text-violet-600 dark:text-violet-400">{sleepHours}h</span>
+          </Label>
+          <input
+            type="range"
+            min={5}
+            max={10}
+            step={0.5}
+            value={sleepHours}
+            onChange={(e) => onSleepHours(Number(e.target.value))}
+            className="w-full accent-violet-500"
+          />
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>5h</span>
+            <span>10h</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <Calendar className="w-4 h-4 text-violet-500" />
+            Tem compromissos fixos na semana?
+          </Label>
+          <div className="flex gap-2">
+            {(
+              [
+                { v: 'yes', label: 'Sim' },
+                { v: 'no', label: 'Não' },
+                { v: 'unknown', label: 'Ainda não sei' },
+              ] as { v: HasCommitments; label: string }[]
+            ).map((opt) => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => onCommitments(opt.v)}
+                className={cn(
+                  'flex-1 py-2 px-3 rounded-xl border-2 text-sm font-medium transition-all min-h-[44px]',
+                  hasCommitments === opt.v
+                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+        Você pode alterar isso depois nas configurações
+      </p>
+
+      <div className="flex justify-between pt-4 border-t">
+        <Button variant="outline" onClick={onBack}>
+          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+        </Button>
+        <Button
+          onClick={onNext}
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white gap-1"
+        >
+          Continuar <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 4 — Motivation style
+// ---------------------------------------------------------------------------
+
+function Step4Motivation({
+  selected,
+  onChange,
+  onNext,
+  onBack,
+}: {
+  selected: MotivationStyle;
+  onChange: (v: MotivationStyle) => void;
+  onNext: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <div className="text-center">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">O que te mantém motivado(a)?</h2>
+      </div>
+
+      <div className="space-y-3">
+        {MOTIVATION_OPTIONS.map((opt) => {
+          const Icon = opt.icon;
+          const isSelected = selected === opt.id;
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => onChange(opt.id as MotivationStyle)}
+              className={cn(
+                'w-full text-left p-4 rounded-xl border-2 transition-all flex items-center gap-4 min-h-[44px]',
+                isSelected
+                  ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20'
+                  : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300'
+              )}
+            >
+              <div
+                className={cn(
+                  'w-10 h-10 rounded-xl flex items-center justify-center shrink-0',
+                  isSelected
+                    ? 'bg-violet-500 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500'
+                )}
+              >
+                <Icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p
+                  className={cn(
+                    'font-medium text-sm',
+                    isSelected ? 'text-violet-700 dark:text-violet-300' : 'text-gray-800 dark:text-white'
+                  )}
+                >
+                  {opt.label}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{opt.desc}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-between pt-4 border-t">
+        <Button variant="outline" onClick={onBack}>
+          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+        </Button>
+        <Button
+          onClick={onNext}
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white gap-1"
+        >
+          Continuar <ChevronRight className="w-4 h-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Step 5 — First task (optional)
+// ---------------------------------------------------------------------------
+
+function Step5FirstTask({
+  desc,
+  minutes,
+  priority,
+  onDesc,
+  onMinutes,
+  onPriority,
+  onFinish,
+  onSkip,
+  onBack,
+  isLoading,
+}: {
+  desc: string;
+  minutes: number;
+  priority: TaskPriority;
+  onDesc: (v: string) => void;
+  onMinutes: (v: number) => void;
+  onPriority: (v: TaskPriority) => void;
+  onFinish: () => void;
+  onSkip: () => void;
+  onBack: () => void;
+  isLoading: boolean;
+}) {
+  return (
+    <div className="space-y-5 animate-fade-in">
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+          Quer adicionar sua primeira tarefa?
+        </h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Começar com algo pequeno já é um grande passo.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="task-desc">Descrição da tarefa</Label>
+          <Input
+            id="task-desc"
+            placeholder="Ex: Estudar por 30 minutos..."
+            value={desc}
+            onChange={(e) => onDesc(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Tempo estimado</Label>
+          <div className="flex gap-2 flex-wrap">
+            {TIME_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onMinutes(opt.value)}
+                className={cn(
+                  'px-4 py-2 rounded-xl border-2 text-sm font-medium transition-all min-h-[44px]',
+                  minutes === opt.value
+                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-300'
+                    : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Prioridade</Label>
+          <div className="flex gap-2">
+            {PRIORITY_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => onPriority(opt.value)}
+                className={cn(
+                  'flex-1 py-2 px-3 rounded-xl border-2 text-sm font-medium transition-all min-h-[44px]',
+                  priority === opt.value
+                    ? PRIORITY_SELECTED[opt.value]
+                    : `border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 ${opt.defaultCls}`
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 pt-4 border-t">
+        <Button
+          onClick={onFinish}
+          disabled={!desc.trim() || isLoading}
+          className="bg-gradient-to-r from-violet-500 to-purple-600 text-white w-full"
+        >
+          {isLoading ? 'Salvando...' : 'Adicionar e ir para o Dashboard'}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onSkip}
+          disabled={isLoading}
+          className="w-full text-gray-500 dark:text-gray-400"
+        >
+          Pular por agora
+        </Button>
+      </div>
+
+      <div className="flex justify-start">
+        <Button variant="ghost" size="sm" onClick={onBack} disabled={isLoading} className="text-gray-400">
+          <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+function loadSavedProgress(): { step: number; data: OnboardingState } {
+  try {
+    const raw = localStorage.getItem('onboardingProgress');
+    if (raw) return JSON.parse(raw) as { step: number; data: OnboardingState };
+  } catch {
+    // ignore corrupted data
+  }
+  return { step: 1, data: DEFAULT_STATE };
+}
+
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState(1);
+  const { user } = useAuth();
+  const upsertPreferences = useUpsertPreferences();
+  const createTask = useCreateTask();
 
-  // Work schedules state
-  const [workSchedules, setWorkSchedules] = useState<{
-    [day: number]: { enabled: boolean; startTime: string; endTime: string };
-  }>({
-    1: { enabled: true, startTime: '09:00', endTime: '18:00' },
-    2: { enabled: true, startTime: '09:00', endTime: '18:00' },
-    3: { enabled: true, startTime: '09:00', endTime: '18:00' },
-    4: { enabled: true, startTime: '09:00', endTime: '18:00' },
-    5: { enabled: true, startTime: '09:00', endTime: '18:00' },
-    6: { enabled: false, startTime: '09:00', endTime: '13:00' },
-    0: { enabled: false, startTime: '09:00', endTime: '13:00' },
-  });
+  const saved = loadSavedProgress();
+  const [step, setStep] = useState(saved.step);
+  const [data, setData] = useState<OnboardingState>(saved.data);
 
-  // Class schedules state
-  const [classSchedules, setClassSchedules] = useState<{
-    [day: number]: { enabled: boolean; startTime: string; endTime: string };
-  }>({
-    1: { enabled: false, startTime: '19:00', endTime: '22:00' },
-    2: { enabled: false, startTime: '19:00', endTime: '22:00' },
-    3: { enabled: false, startTime: '19:00', endTime: '22:00' },
-    4: { enabled: false, startTime: '19:00', endTime: '22:00' },
-    5: { enabled: false, startTime: '19:00', endTime: '22:00' },
-    6: { enabled: false, startTime: '08:00', endTime: '12:00' },
-    0: { enabled: false, startTime: '08:00', endTime: '12:00' },
-  });
-
-  // Fixed commitments state
-  const [commitments, setCommitments] = useState<Commitment[]>([]);
-
-  const handleWorkChange = (day: number, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => {
-    setWorkSchedules((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value },
-    }));
+  const saveProgress = (nextStep: number, nextData: OnboardingState) => {
+    localStorage.setItem('onboardingProgress', JSON.stringify({ step: nextStep, data: nextData }));
   };
 
-  const handleClassChange = (day: number, field: 'enabled' | 'startTime' | 'endTime', value: boolean | string) => {
-    setClassSchedules((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value },
-    }));
+  const updateData = (partial: Partial<OnboardingState>) => {
+    setData((prev) => {
+      const next = { ...prev, ...partial };
+      saveProgress(step, next);
+      return next;
+    });
   };
 
-  const handleAddCommitment = (commitment: Commitment) => {
-    setCommitments((prev) => [...prev, commitment]);
+  const goNext = () => {
+    const next = step + 1;
+    setStep(next);
+    saveProgress(next, data);
   };
 
-  const handleRemoveCommitment = (id: string) => {
-    setCommitments((prev) => prev.filter((c) => c.id !== id));
+  const goBack = () => {
+    const prev = step - 1;
+    setStep(prev);
+    saveProgress(prev, data);
   };
 
-  const convertToTimeBlocks = (
-    schedules: { [day: number]: { enabled: boolean; startTime: string; endTime: string } },
-    type: TimeBlockType
-  ): TimeBlock[] => {
-    return Object.entries(schedules)
-      .filter(([, schedule]) => schedule.enabled)
-      .map(([day, schedule]) => ({
-        id: generateId(),
-        dayOfWeek: Number(day) as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        type,
-        title: type === TimeBlockType.WORK ? 'Trabalho' : 'Aula',
-        isRecurring: true,
-      }));
-  };
+  const finishOnboarding = async (withTask: boolean) => {
+    try {
+      await upsertPreferences.mutateAsync({
+        wakeTime: data.wakeTime,
+        idealSleepHours: data.sleepHours,
+      });
 
-  const handleFinish = () => {
-    // Convert data to OnboardingData format
-    const onboardingData: OnboardingData = {
-      workSchedule: convertToTimeBlocks(workSchedules, TimeBlockType.WORK),
-      classSchedule: convertToTimeBlocks(classSchedules, TimeBlockType.CLASS),
-      fixedCommitments: commitments.map((c) => ({
-        id: c.id,
-        dayOfWeek: c.dayOfWeek as 0 | 1 | 2 | 3 | 4 | 5 | 6,
-        startTime: c.startTime,
-        endTime: c.endTime,
-        type: TimeBlockType.FIXED,
-        title: c.title,
-        isRecurring: true,
-      })),
-    };
+      if (withTask && data.firstTaskDesc.trim()) {
+        await createTask.mutateAsync({
+          title: data.firstTaskDesc.trim(),
+          category: TaskCategory.OTHER,
+          priority: data.firstTaskPriority,
+          estimatedMinutes: data.firstTaskMinutes,
+        });
+      }
 
-    // Save to localStorage
-    localStorage.setItem('onboardingData', JSON.stringify(onboardingData));
-    localStorage.setItem('onboardingCompleted', 'true');
+      localStorage.setItem('onboardingGoals', JSON.stringify(data.goals));
+      localStorage.setItem('onboardingMotivation', data.motivationStyle);
+      localStorage.setItem('onboardingCompleted', 'true');
+      localStorage.removeItem('onboardingProgress');
 
-    // Navigate to dashboard
-    navigate('/dashboard');
-  };
-
-  const handleNext = () => {
-    if (currentStep < 4) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      handleFinish();
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Erro ao salvar preferências:', error);
+      toast.error('Erro ao salvar suas preferências. Tente novamente.');
     }
   };
 
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
-    }
-  };
+  const isLoading = upsertPreferences.isPending || createTask.isPending;
+  const firstName = user?.name?.split(' ')[0] ?? 'você';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-3xl shadow-2xl border-0">
-        <CardHeader className="pb-2">
-          <ProgressIndicator currentStep={currentStep} totalSteps={4} />
-        </CardHeader>
+      <Card className="w-full max-w-lg shadow-2xl border-0">
+        {step > 1 && <ProgressBar step={step} total={5} />}
 
-        <CardContent className="pt-6">
-          {currentStep === 1 && <StepWelcome onNext={handleNext} />}
+        <CardContent className={cn('pb-8 px-6', step === 1 ? 'pt-8' : 'pt-6')}>
+          {step === 1 && <Step1Welcome name={firstName} onNext={goNext} />}
 
-          {currentStep === 2 && <StepWork schedules={workSchedules} onChange={handleWorkChange} />}
-
-          {currentStep === 3 && <StepClass schedules={classSchedules} onChange={handleClassChange} />}
-
-          {currentStep === 4 && (
-            <StepCommitments
-              commitments={commitments}
-              onAdd={handleAddCommitment}
-              onRemove={handleRemoveCommitment}
+          {step === 2 && (
+            <Step2Goals
+              goals={data.goals}
+              onChange={(goals) => updateData({ goals })}
+              onNext={goNext}
+              onBack={goBack}
             />
           )}
 
-          {/* Navigation buttons */}
-          {currentStep > 1 && (
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button variant="outline" onClick={handleBack}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
+          {step === 3 && (
+            <Step3Profile
+              wakeTime={data.wakeTime}
+              sleepHours={data.sleepHours}
+              hasCommitments={data.hasCommitments}
+              onWakeTime={(v) => updateData({ wakeTime: v })}
+              onSleepHours={(v) => updateData({ sleepHours: v })}
+              onCommitments={(v) => updateData({ hasCommitments: v })}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
 
-              <Button
-                onClick={handleNext}
-                className="bg-gradient-to-r from-focus-blue-500 to-calm-purple-500 hover:from-focus-blue-600 hover:to-calm-purple-600"
-              >
-                {currentStep === 4 ? (
-                  <>
-                    <Rocket className="w-4 h-4 mr-2" />
-                    Finalizar e Começar
-                  </>
-                ) : (
-                  <>
-                    Próximo
-                    <ChevronRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
+          {step === 4 && (
+            <Step4Motivation
+              selected={data.motivationStyle}
+              onChange={(v) => updateData({ motivationStyle: v })}
+              onNext={goNext}
+              onBack={goBack}
+            />
+          )}
+
+          {step === 5 && (
+            <Step5FirstTask
+              desc={data.firstTaskDesc}
+              minutes={data.firstTaskMinutes}
+              priority={data.firstTaskPriority}
+              onDesc={(v) => updateData({ firstTaskDesc: v })}
+              onMinutes={(v) => updateData({ firstTaskMinutes: v })}
+              onPriority={(v) => updateData({ firstTaskPriority: v })}
+              onFinish={() => finishOnboarding(true)}
+              onSkip={() => finishOnboarding(false)}
+              onBack={goBack}
+              isLoading={isLoading}
+            />
           )}
         </CardContent>
       </Card>

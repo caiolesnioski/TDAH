@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 const WORK_DURATION = 25 * 60;
 const BREAK_DURATION = 5 * 60;
-const RADIUS = 110;
+const RADIUS = 90;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export default function FocusTimer() {
@@ -91,25 +91,19 @@ export default function FocusTimer() {
             </div>
 
             {/* Timer circular */}
-            <div className="relative w-64 h-64">
-              <svg className="w-full h-full -rotate-90" viewBox="0 0 240 240">
+            <div className="relative w-52 h-52">
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
                 <circle
-                  cx="120" cy="120" r={RADIUS}
-                  fill="none" strokeWidth="10"
-                  className="text-gray-200 dark:text-gray-700"
-                  stroke="currentColor"
+                  cx="100" cy="100" r={RADIUS}
+                  fill="none" stroke="#2A3A55" strokeWidth="6"
                 />
                 <circle
-                  cx="120" cy="120" r={RADIUS}
-                  fill="none" strokeWidth="10"
-                  stroke="currentColor"
+                  cx="100" cy="100" r={RADIUS}
+                  fill="none" stroke="#6366F1" strokeWidth="6"
+                  strokeLinecap="round"
                   strokeDasharray={CIRCUMFERENCE}
                   strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  className={cn(
-                    'transition-[stroke-dashoffset] duration-500',
-                    isBreak ? 'text-green-500' : 'text-blue-500'
-                  )}
+                  style={{ transition: 'stroke-dashoffset 1s linear' }}
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
@@ -158,10 +152,8 @@ export default function FocusTimer() {
                   <div
                     key={i}
                     className={cn(
-                      'w-3 h-3 rounded-full transition-colors',
-                      i < sessionCount
-                        ? 'bg-blue-500'
-                        : 'bg-gray-200 dark:bg-gray-700'
+                      'w-2.5 h-2.5 rounded-full transition-colors',
+                      i < sessionCount ? 'bg-primary' : 'bg-border'
                     )}
                   />
                 ))}

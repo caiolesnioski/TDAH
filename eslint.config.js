@@ -22,6 +22,7 @@ export default defineConfig([
     rules: {
       'react-hooks/incompatible-library': 'warn',
       'react-hooks/purity': 'warn',
+      'react-hooks/set-state-in-effect': 'warn',
     },
   },
   {

@@ -20,8 +20,6 @@ import {
 } from 'lucide-react';
 import { TimeBlockType } from '@/types';
 import { cn } from '@/lib/utils';
-import { useTimeBlocks, useCreateTimeBlock, useDeleteTimeBlock, useDeleteAllTimeBlocks } from '@/hooks/useTimeBlocks';
-import toast from 'react-hot-toast';
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Domingo', short: 'Dom' },
