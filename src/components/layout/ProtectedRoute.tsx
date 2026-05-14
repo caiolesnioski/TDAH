@@ -1,8 +1,43 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useSundayPlanning } from '@/hooks/useSundayPlanning';
+import { WeeklyPlanningBanner } from '@/components/WeeklyPlanningBanner';
+import TaskFocusModal from '@/components/TaskFocusModal';
+
+function getWeekRedirectKey(): string {
+  const d = new Date();
+  const jan1 = new Date(d.getFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7);
+  return `weekly_planning_redirected_${d.getFullYear()}-${String(week).padStart(2, '0')}`;
+}
+
+// Headless child component — isolates hook calls that must not run before auth checks
+function AuthenticatedLayout() {
+  const { needsPlanning, isLoading } = useSundayPlanning();
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (isLoading || !needsPlanning || pathname === '/planning/weekly') return;
+    const key = getWeekRedirectKey();
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    navigate('/planning/weekly', { replace: true });
+  }, [needsPlanning, isLoading, pathname, navigate]);
+
+  return (
+    <>
+      <WeeklyPlanningBanner />
+      <Outlet />
+      <TaskFocusModal />
+    </>
+  );
+}
 
 export default function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -17,5 +52,10 @@ export default function ProtectedRoute() {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  return <Outlet />;
+  const onboardingCompleted = localStorage.getItem('onboardingCompleted') === 'true';
+  if (!onboardingCompleted && location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  return <AuthenticatedLayout />;
 }

@@ -58,7 +58,7 @@ export default function Profile() {
       <SidebarInset>
         <SiteHeader />
         <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen max-w-2xl">
+          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen max-w-2xl mx-auto">
 
             <div className="flex items-center gap-3">
               <User className="h-7 w-7 text-blue-500" />
@@ -90,8 +90,9 @@ export default function Profile() {
                       placeholder="Seu nome"
                       onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
                     />
-                    <Button onClick={handleSaveName} disabled={saving} className="shrink-0">
+                    <Button onClick={handleSaveName} disabled={saving} variant="primary" className="shrink-0 gap-2">
                       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                      Salvar
                     </Button>
                   </div>
                 </div>
@@ -137,7 +138,7 @@ export default function Profile() {
                 <p className="text-xs text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 rounded-lg p-2">
                   💡 Com base nisso, vamos sugerir horários ideais para suas tarefas e pausas!
                 </p>
-                <Button onClick={handleSaveSleep} variant="outline" className="w-full gap-2">
+                <Button onClick={handleSaveSleep} variant="primary" className="w-full gap-2">
                   <Save className="h-4 w-4" /> Salvar Preferências de Sono
                 </Button>
               </CardContent>

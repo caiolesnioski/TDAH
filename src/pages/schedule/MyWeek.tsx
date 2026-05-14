@@ -445,8 +445,8 @@ export default function MyWeek() {
                               className="absolute left-0 right-0 z-20 pointer-events-none"
                               style={{ top: `${top}px` }}
                             >
-                              <div className="relative h-0.5 bg-red-500 ml-7">
-                                <div className="absolute -left-2 -top-1.5 w-3 h-3 bg-red-500 rounded-full" />
+                              <div className="relative h-0.5 bg-primary opacity-80 ml-7">
+                                <div className="absolute -left-1 -top-[3px] w-2 h-2 bg-primary rounded-full" />
                               </div>
                             </div>
                           );

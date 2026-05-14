@@ -6,7 +6,10 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Trophy, Lock, Star } from 'lucide-react';
+import {
+  Trophy, Lock, Star, Target, Zap, Dumbbell, Activity, Crown,
+  BookOpen, Briefcase, Home, Sparkles, Swords, Calendar, Rocket,
+} from 'lucide-react';
 import { TaskCategory, TaskPriority, TaskStatus } from '@/types';
 import type { Task } from '@/types';
 import { cn } from '@/lib/utils';
@@ -15,28 +18,28 @@ interface AchievementDef {
   id: string;
   name: string;
   desc: string;
-  icon: string;
+  icon: React.ElementType;
   xp: number;
   max: number;
   category: 'tasks' | 'category' | 'focus' | 'special';
 }
 
 const ACHIEVEMENTS: AchievementDef[] = [
-  { id: 'first_task',   name: 'Primeiro Passo',   desc: 'Complete sua primeira tarefa',           icon: '🎯', xp: 10,  max: 1,   category: 'tasks' },
-  { id: 'tasks_5',      name: 'Embalo',            desc: 'Complete 5 tarefas',                     icon: '⚡', xp: 25,  max: 5,   category: 'tasks' },
-  { id: 'tasks_25',     name: 'Produtivo',         desc: 'Complete 25 tarefas',                    icon: '💪', xp: 50,  max: 25,  category: 'tasks' },
-  { id: 'tasks_100',    name: 'Maratonista',       desc: 'Complete 100 tarefas',                   icon: '🏃', xp: 100, max: 100, category: 'tasks' },
-  { id: 'tasks_500',    name: 'Lenda',             desc: 'Complete 500 tarefas',                   icon: '👑', xp: 500, max: 500, category: 'tasks' },
-  { id: 'study_20',     name: 'Estudioso',         desc: 'Complete 20 tarefas de estudo',          icon: '📚', xp: 60,  max: 20,  category: 'category' },
-  { id: 'work_20',      name: 'Profissional',      desc: 'Complete 20 tarefas de trabalho',        icon: '💼', xp: 60,  max: 20,  category: 'category' },
-  { id: 'health_10',    name: 'Saúde em Dia',      desc: 'Complete 10 tarefas de saúde',           icon: '💪', xp: 40,  max: 10,  category: 'category' },
-  { id: 'home_10',      name: 'Lar Organizado',    desc: 'Complete 10 tarefas de casa',            icon: '🏠', xp: 40,  max: 10,  category: 'category' },
-  { id: 'variety',      name: 'Multitarefa',       desc: 'Complete tarefas em 5 categorias',       icon: '🌈', xp: 75,  max: 5,   category: 'special' },
-  { id: 'high_prio',    name: 'Guerreiro',         desc: 'Complete 10 tarefas de alta prioridade', icon: '⚔️', xp: 80,  max: 10,  category: 'tasks' },
-  { id: 'planner',      name: 'Planejador',        desc: 'Defina prazo em 10 tarefas',             icon: '📅', xp: 35,  max: 10,  category: 'special' },
-  { id: 'all_cats',     name: 'Focado Total',      desc: 'Complete tarefas em todas as categorias',icon: '🌟', xp: 200, max: 6,   category: 'special' },
-  { id: 'speed_day',    name: 'Relâmpago',         desc: 'Complete 5 tarefas em um único dia',     icon: '⚡', xp: 30,  max: 5,   category: 'focus' },
-  { id: 'no_procras',   name: 'Sem Procrastinar',  desc: 'Complete 3 tarefas no mesmo dia que criou', icon: '🚀', xp: 45, max: 3, category: 'focus' },
+  { id: 'first_task',   name: 'Primeiro Passo',   desc: 'Complete sua primeira tarefa',              icon: Target,    xp: 10,  max: 1,   category: 'tasks' },
+  { id: 'tasks_5',      name: 'Embalo',            desc: 'Complete 5 tarefas',                        icon: Zap,       xp: 25,  max: 5,   category: 'tasks' },
+  { id: 'tasks_25',     name: 'Produtivo',         desc: 'Complete 25 tarefas',                       icon: Dumbbell,  xp: 50,  max: 25,  category: 'tasks' },
+  { id: 'tasks_100',    name: 'Maratonista',       desc: 'Complete 100 tarefas',                      icon: Activity,  xp: 100, max: 100, category: 'tasks' },
+  { id: 'tasks_500',    name: 'Lenda',             desc: 'Complete 500 tarefas',                      icon: Crown,     xp: 500, max: 500, category: 'tasks' },
+  { id: 'study_20',     name: 'Estudioso',         desc: 'Complete 20 tarefas de estudo',             icon: BookOpen,  xp: 60,  max: 20,  category: 'category' },
+  { id: 'work_20',      name: 'Profissional',      desc: 'Complete 20 tarefas de trabalho',           icon: Briefcase, xp: 60,  max: 20,  category: 'category' },
+  { id: 'health_10',    name: 'Saúde em Dia',      desc: 'Complete 10 tarefas de saúde',              icon: Dumbbell,  xp: 40,  max: 10,  category: 'category' },
+  { id: 'home_10',      name: 'Lar Organizado',    desc: 'Complete 10 tarefas de casa',               icon: Home,      xp: 40,  max: 10,  category: 'category' },
+  { id: 'variety',      name: 'Multitarefa',       desc: 'Complete tarefas em 5 categorias',          icon: Sparkles,  xp: 75,  max: 5,   category: 'special' },
+  { id: 'high_prio',    name: 'Guerreiro',         desc: 'Complete 10 tarefas de alta prioridade',    icon: Swords,    xp: 80,  max: 10,  category: 'tasks' },
+  { id: 'planner',      name: 'Planejador',        desc: 'Defina prazo em 10 tarefas',                icon: Calendar,  xp: 35,  max: 10,  category: 'special' },
+  { id: 'all_cats',     name: 'Focado Total',      desc: 'Complete tarefas em todas as categorias',   icon: Star,      xp: 200, max: 6,   category: 'special' },
+  { id: 'speed_day',    name: 'Relâmpago',         desc: 'Complete 5 tarefas em um único dia',        icon: Zap,       xp: 30,  max: 5,   category: 'focus' },
+  { id: 'no_procras',   name: 'Sem Procrastinar',  desc: 'Complete 3 tarefas no mesmo dia que criou', icon: Rocket,    xp: 45,  max: 3,   category: 'focus' },
 ];
 
 function getProgress(tasks: Task[], id: string): number {
@@ -62,9 +65,9 @@ function getProgress(tasks: Task[], id: string): number {
 type Filter = 'all' | 'unlocked' | 'progress' | 'locked';
 const FILTER_LABELS: Record<Filter, string> = {
   all: 'Todas',
-  unlocked: '✅ Desbloqueadas',
-  progress: '⏳ Em Progresso',
-  locked: '🔒 Bloqueadas',
+  unlocked: 'Desbloqueadas',
+  progress: 'Em Progresso',
+  locked: 'Bloqueadas',
 };
 
 export default function Conquistas() {
@@ -114,9 +117,9 @@ export default function Conquistas() {
                 </div>
               </div>
               <div className="md:ml-auto">
-                <div className="w-full md:w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                <div className="w-full md:w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                   <div
-                    className="h-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-500"
+                    className="h-2 rounded-full bg-primary transition-all duration-500"
                     style={{ width: `${(unlockedCount / achievements.length) * 100}%` }}
                   />
                 </div>
@@ -144,7 +147,7 @@ export default function Conquistas() {
             {/* Empty state */}
             {filtered.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 space-y-4">
-                <div className="text-6xl">🏆</div>
+                <Trophy className="h-16 w-16 text-gray-300 dark:text-gray-600" />
                 <p className="text-lg font-semibold text-gray-700 dark:text-gray-300">
                   Nenhuma conquista aqui ainda!
                 </p>
@@ -158,6 +161,7 @@ export default function Conquistas() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((a) => {
                 const pct = Math.round((a.progress / a.max) * 100);
+                const Icon = a.icon;
                 return (
                   <Card
                     key={a.id}
@@ -173,23 +177,26 @@ export default function Conquistas() {
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4">
                         <div className={cn(
-                          'text-4xl w-14 h-14 flex items-center justify-center rounded-2xl shrink-0',
+                          'w-14 h-14 flex items-center justify-center rounded-2xl shrink-0',
                           a.unlocked
                             ? 'bg-amber-100 dark:bg-amber-900/40'
                             : 'bg-gray-100 dark:bg-gray-700'
                         )}>
-                          {a.unlocked ? a.icon : <Lock className="h-6 w-6 text-gray-400" />}
+                          {a.unlocked ? <Icon className="h-6 w-6 text-amber-600 dark:text-amber-400" /> : <Lock className="h-6 w-6 text-gray-400" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-gray-800 dark:text-white truncate">
                               {a.name}
                             </h3>
-                            {a.unlocked && (
-                              <Badge className="bg-amber-500 text-white text-[10px] px-1.5 py-0 shrink-0">
-                                +{a.xp} XP
-                              </Badge>
-                            )}
+                            <Badge className={cn(
+                              'text-[10px] px-1.5 py-0 shrink-0',
+                              a.unlocked
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-transparent text-muted-foreground border border-border'
+                            )}>
+                              +{a.xp} XP
+                            </Badge>
                           </div>
                           <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                             {a.desc}
@@ -198,7 +205,7 @@ export default function Conquistas() {
                             <>
                               <div className="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 mb-1">
                                 <div
-                                  className="h-2 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 transition-all duration-500"
+                                  className="h-2 rounded-full bg-primary transition-all duration-500"
                                   style={{ width: `${pct}%` }}
                                 />
                               </div>
