@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
-import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSundayPlanning } from '@/hooks/useSundayPlanning';
-import { WeeklyPlanningBanner } from '@/components/WeeklyPlanningBanner';
-import TaskFocusModal from '@/components/TaskFocusModal';
+import AppLayout from '@/components/layout/AppLayout';
 
 function getWeekRedirectKey(): string {
   const d = new Date();
@@ -26,13 +25,7 @@ function AuthenticatedLayout() {
     navigate('/planning/weekly', { replace: true });
   }, [needsPlanning, isLoading, pathname, navigate]);
 
-  return (
-    <>
-      <WeeklyPlanningBanner />
-      <Outlet />
-      <TaskFocusModal />
-    </>
-  );
+  return <AppLayout />;
 }
 
 export default function ProtectedRoute() {
