@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -332,15 +331,15 @@ export default function MyWeek() {
                 const dayBlocks = blocksByDay[day.value] || [];
 
                 return (
-                  <Card
+                  <div
                     key={day.value}
                     className={cn(
-                      'border-0 shadow-md overflow-hidden',
+                      'bg-base-200 rounded-xl shadow-md overflow-hidden border border-base-300',
                       day.isToday && 'ring-2 ring-focus-blue-500'
                     )}
                   >
-                    <CardHeader className="py-2 px-3 bg-gray-50 dark:bg-gray-800">
-                      <CardTitle className="text-sm font-medium flex items-center justify-between">
+                    <div className="py-2 px-3 bg-gray-50 dark:bg-gray-800">
+                      <div className="text-sm font-medium flex items-center justify-between">
                         <span className={cn(day.isToday && 'text-focus-blue-600 dark:text-focus-blue-400')}>
                           {day.short}
                         </span>
@@ -353,9 +352,9 @@ export default function MyWeek() {
                         >
                           {day.dayNumber}
                         </Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0">
+                      </div>
+                    </div>
+                    <div className="p-0">
                       {/* Container com altura total do conteúdo — o scroll é no wrapper externo */}
                       <div
                         className="relative"
@@ -445,8 +444,8 @@ export default function MyWeek() {
                           </div>
                         )}
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -460,24 +459,24 @@ export default function MyWeek() {
                   const dayBlocks = blocksByDay[day.value] || [];
 
                   return (
-                    <Card
+                    <div
                       key={day.value}
                       className={cn(
-                        'border-0 shadow-lg overflow-hidden',
+                        'bg-base-200 rounded-xl shadow-lg overflow-hidden border border-base-300',
                         day.isToday && 'ring-2 ring-focus-blue-500'
                       )}
                     >
-                      <CardHeader className="py-3 px-4 bg-gray-50 dark:bg-gray-800">
-                        <CardTitle className="text-base font-semibold flex items-center justify-between">
+                      <div className="py-3 px-4 bg-gray-50 dark:bg-gray-800">
+                        <div className="text-base font-semibold flex items-center justify-between">
                           <span className={cn(day.isToday && 'text-focus-blue-600 dark:text-focus-blue-400')}>
                             {day.label}, {day.dayNumber}
                           </span>
                           {day.isToday && (
                             <Badge className="bg-focus-blue-500">Hoje</Badge>
                           )}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-0">
+                        </div>
+                      </div>
+                      <div className="p-0">
                         <div
                           className="relative overflow-y-auto"
                           style={{ height: '60vh' }}
@@ -554,8 +553,8 @@ export default function MyWeek() {
                             </div>
                           )}
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })}
             </div>
@@ -577,8 +576,8 @@ export default function MyWeek() {
                 const mins = totalMinutes % 60;
 
                 return (
-                  <Card className="border-0 shadow-md">
-                    <CardContent className="py-3">
+                  <div className="bg-base-200 rounded-xl border border-base-300 shadow-md">
+                    <div className="py-3">
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           {dayBlocks.length} compromisso{dayBlocks.length !== 1 ? 's' : ''}
@@ -587,8 +586,8 @@ export default function MyWeek() {
                           {hours}h{mins > 0 ? ` ${mins}min` : ''} ocupado{hours !== 1 ? 's' : ''}
                         </p>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 );
               })()}
             </div>

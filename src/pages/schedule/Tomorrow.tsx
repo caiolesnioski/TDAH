@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Lightbulb } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
 import { cn } from '@/lib/utils';
