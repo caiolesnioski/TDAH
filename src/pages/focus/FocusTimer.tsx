@@ -57,18 +57,7 @@ export default function FocusTimer() {
   const dotCount = Math.max(4, sessionCount + (sessionCount % 4 === 0 ? 0 : 4 - (sessionCount % 4)));
 
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
+    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
           <div className="flex flex-col items-center gap-8 px-4 w-full max-w-sm">
 
             {/* Título */}
@@ -169,6 +158,7 @@ export default function FocusTimer() {
               </CardContent>
             </Card>
 
-    </div>
+          </div>
+        </div>
   );
 }

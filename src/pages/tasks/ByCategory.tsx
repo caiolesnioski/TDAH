@@ -190,10 +190,6 @@ export default function ByCategory() {
               </div>
             )}
 
-          </div>
-        </div>
-      </SidebarInset>
-
       <ConfirmDialog
         open={!!taskToDelete}
         title="Excluir tarefa"
@@ -202,6 +198,6 @@ export default function ByCategory() {
         onConfirm={() => { if (taskToDelete) handleDelete(taskToDelete); setTaskToDelete(null); }}
         onCancel={() => setTaskToDelete(null)}
       />
-    </SidebarProvider>
+    </div>
   );
 }

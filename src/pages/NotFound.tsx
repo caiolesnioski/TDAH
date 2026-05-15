@@ -6,18 +6,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
+    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
           <div className="text-center space-y-6 max-w-md px-6">
             <div className="text-8xl select-none">🚧</div>
 
@@ -73,6 +62,7 @@ export default function NotFound() {
                 </Button>
               </div>
             </div>
-    </div>
+          </div>
+        </div>
   );
 }
