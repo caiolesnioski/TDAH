@@ -1,7 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Home, ListTodo, Calendar, Clock } from 'lucide-react';
 
@@ -9,18 +6,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <SidebarProvider
-      style={
-        {
-          '--sidebar-width': 'calc(var(--spacing) * 72)',
-          '--header-height': 'calc(var(--spacing) * 12)',
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
+    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
           <div className="text-center space-y-6 max-w-md px-6">
             <div className="text-8xl select-none">🚧</div>
 
@@ -78,7 +64,5 @@ export default function NotFound() {
             </div>
           </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
   );
 }

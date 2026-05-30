@@ -1,8 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { Card, CardContent } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle2, Circle, CalendarDays, Zap, Sun } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
@@ -31,6 +28,7 @@ function timeToMin(t: string) {
 }
 
 export default function Today() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>(loadTasks);
   const [now, setNow] = useState(new Date());
 
@@ -72,14 +70,7 @@ export default function Today() {
   const allDone = tasks.length > 0 && doneTasks.length === tasks.length;
 
   return (
-    <SidebarProvider
-      style={{ '--sidebar-width': 'calc(var(--spacing) * 72)', '--header-height': 'calc(var(--spacing) * 12)' } as React.CSSProperties}
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
 
             {/* Header com data */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
@@ -98,8 +89,7 @@ export default function Today() {
             </div>
 
             {/* Progresso do dia */}
-            <Card className="border-0 shadow-md bg-white dark:bg-gray-800">
-              <CardContent className="p-4">
+            <div className="bg-base-200 rounded-xl border border-base-300 p-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progresso do Dia</span>
                   <span className="text-sm font-bold text-gray-800 dark:text-white">{doneTasks.length}/{tasks.length}</span>
@@ -113,21 +103,18 @@ export default function Today() {
                 <p className="text-xs text-gray-500 mt-1.5">
                   {allDone ? '🎉 Parabéns! Você completou tudo hoje!' : progress >= 50 ? '💪 Você está indo muito bem!' : 'Vamos lá, você consegue! 🚀'}
                 </p>
-              </CardContent>
-            </Card>
+            </div>
 
             {/* Próximo compromisso */}
             {nextBlock && (
-              <Card className="border-0 shadow-md bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-400">
-                <CardContent className="p-4 flex items-center gap-3">
+              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border-l-4 border-amber-400 p-4 flex items-center gap-3">
                   <Zap className="h-5 w-5 text-amber-500 shrink-0" />
                   <div>
                     <p className="text-xs text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wide">Próximo compromisso</p>
                     <p className="font-semibold text-gray-800 dark:text-white">{nextBlock.title}</p>
                     <p className="text-xs text-gray-500">às {nextBlock.startTime} — {nextBlock.endTime}</p>
                   </div>
-                </CardContent>
-              </Card>
+              </div>
             )}
 
             {/* Compromissos de hoje */}
@@ -175,9 +162,9 @@ export default function Today() {
                 tasks.map((task) => {
                   const done = task.status === TaskStatus.COMPLETED;
                   return (
-                    <Card key={task.id}
-                      className={cn('border-0 shadow-sm hover:shadow-md transition-shadow', done && 'opacity-60')}>
-                      <CardContent className="p-3 flex items-center gap-3">
+                    <div key={task.id}
+                      className={cn('bg-base-200 rounded-xl border border-base-300 hover:shadow-md transition-shadow', done && 'opacity-60')}>
+                      <div className="p-3 flex items-center gap-3">
                         <button onClick={() => handleToggle(task.id, !done)} className="shrink-0">
                           {done
                             ? <CheckCircle2 className="h-6 w-6 text-green-500" />
@@ -195,16 +182,26 @@ export default function Today() {
                           )}
                         </div>
                         {done && <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">✓ Feito</Badge>}
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </div>
                   );
                 })
               )}
             </div>
 
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+
+            {/* Botão de resumo do dia */}
+            {(now.getHours() >= 18 || doneTasks.length >= 1) && (
+              <div className="pt-2 pb-4">
+                <button
+                  onClick={() => navigate('/summary/daily')}
+                  className="btn btn-ghost w-full"
+                >
+                  Ver resumo do dia →
+                </button>
+              </div>
+            )}
+
+    </div>
   );
 }

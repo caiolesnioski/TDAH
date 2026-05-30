@@ -1,10 +1,6 @@
 import { useMemo } from 'react';
-import { AppSidebar } from '@/components/app-sidebar';
-import { SiteHeader } from '@/components/site-header';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, Clock, Sparkles } from 'lucide-react';
+import { Calendar, Clock, Sparkles, Lightbulb } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
 import { cn } from '@/lib/utils';
@@ -53,14 +49,7 @@ export default function Tomorrow() {
   const formatHoras = (h: number) => `${parseFloat(h.toFixed(1))}h`;
 
   return (
-    <SidebarProvider
-      style={{ '--sidebar-width': 'calc(var(--spacing) * 72)', '--header-height': 'calc(var(--spacing) * 12)' } as React.CSSProperties}
-    >
-      <AppSidebar variant="inset" />
-      <SidebarInset>
-        <SiteHeader />
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
+    <div className="flex flex-col gap-6 p-4 md:p-6">
 
             {/* Header */}
             <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-6 text-white">
@@ -75,8 +64,7 @@ export default function Tomorrow() {
             </div>
 
             {/* Dica TDAH */}
-            <Card className="border-0 shadow-md bg-amber-50 dark:bg-amber-950/30">
-              <CardContent className="p-4 flex gap-3">
+            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4 flex gap-3">
                 <Lightbulb className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -86,8 +74,7 @@ export default function Tomorrow() {
                     Planejar o dia de amanhã hoje reduz a ansiedade e facilita começar as tarefas! 💡
                   </p>
                 </div>
-              </CardContent>
-            </Card>
+            </div>
 
             {/* Resumo do dia */}
             <div className="grid grid-cols-3 gap-3">
@@ -96,13 +83,11 @@ export default function Tomorrow() {
                 { label: 'Horas Ocupadas', value: formatHoras(totalBlockHours), Icon: Clock },
                 { label: 'Horas Livres', value: formatHoras(freeHours), Icon: Sparkles },
               ].map(({ label, value, Icon }) => (
-                <Card key={label} className="border-0 shadow-sm bg-white dark:bg-gray-800">
-                  <CardContent className="p-3 text-center">
+                <div key={label} className="bg-base-200 rounded-xl border border-base-300 p-3 text-center">
                     <Icon className="h-5 w-5 mx-auto mb-1 text-gray-400" />
                     <div className="text-lg font-bold text-gray-800 dark:text-white">{value}</div>
                     <div className="text-[11px] text-gray-400">{label}</div>
-                  </CardContent>
-                </Card>
+                </div>
               ))}
             </div>
 
@@ -149,8 +134,7 @@ export default function Tomorrow() {
                 </p>
                 <div className="space-y-2">
                   {tasks.slice(0, 5).map((task) => (
-                    <Card key={task.id} className="border-0 shadow-sm bg-white dark:bg-gray-800">
-                      <CardContent className="p-3 flex items-center gap-3">
+                    <div key={task.id} className="bg-base-200 rounded-xl border border-base-300 p-3 flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
                         <p className="text-sm text-gray-800 dark:text-white flex-1 truncate">
                           {task.title || '(sem título)'}
@@ -160,8 +144,7 @@ export default function Tomorrow() {
                             {task.estimatedMinutes}min
                           </Badge>
                         )}
-                      </CardContent>
-                    </Card>
+                    </div>
                   ))}
                   {tasks.length > 5 && (
                     <p className="text-xs text-gray-400 text-center">+{tasks.length - 5} outras tarefas</p>
@@ -170,9 +153,6 @@ export default function Tomorrow() {
               </div>
             )}
 
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    </div>
   );
 }
