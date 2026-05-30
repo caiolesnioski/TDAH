@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle2, Circle, CalendarDays, Zap, Sun } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
@@ -27,6 +28,7 @@ function timeToMin(t: string) {
 }
 
 export default function Today() {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>(loadTasks);
   const [now, setNow] = useState(new Date());
 
@@ -186,6 +188,19 @@ export default function Today() {
                 })
               )}
             </div>
+
+
+            {/* Botão de resumo do dia */}
+            {(now.getHours() >= 18 || doneTasks.length >= 1) && (
+              <div className="pt-2 pb-4">
+                <button
+                  onClick={() => navigate('/summary/daily')}
+                  className="btn btn-ghost w-full"
+                >
+                  Ver resumo do dia →
+                </button>
+              </div>
+            )}
 
     </div>
   );

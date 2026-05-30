@@ -4,6 +4,10 @@
 @plugin "tailwindcss-animate";
 
 /* ─── Custom tdah theme ───────────────────────────────────────────────────── */
+:root {
+  --sidebar-border: 25 16% 15%;
+}
+
 [data-theme="tdah"] {
   color-scheme: dark;
   --color-primary: #E8713C;
@@ -28,14 +32,38 @@
   --color-error-content: #ffffff;
 }
 
+/* ─── Sidebar theme tokens (shadcn sidebar-07 ↔ daisyUI warm palette) ─────── */
+@theme {
+  --color-sidebar:                  #211E19;
+  --color-sidebar-foreground:       #F5E6D3;
+  --color-sidebar-accent:           #2C2820;
+  --color-sidebar-accent-foreground:#F5E6D3;
+  --color-sidebar-primary:          #E8713C;
+  --color-sidebar-primary-foreground:#ffffff;
+  --color-sidebar-border:           #2C2820;
+  --color-sidebar-ring:             #E8713C;
+  --color-background:               #1A1612;
+  --color-foreground:               #F5E6D3;
+  --color-muted:                    #2C2820;
+  --color-muted-foreground:         #A89280;
+  --color-secondary:                #2C2820;
+  --color-secondary-foreground:     #F5E6D3;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background-color: var(--color-base-100);
+  background-color: #0F1117;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
   color: var(--color-base-content);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  background: transparent;
 }
 
 h1, h2, h3, h4, h5, h6 {

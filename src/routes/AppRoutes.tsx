@@ -17,6 +17,7 @@ import FocusTimer from '@/pages/focus/FocusTimer';
 import Profile from '@/pages/settings/Profile';
 import Notifications from '@/pages/settings/Notifications';
 import TdahPreferences from '@/pages/settings/TdahPreferences';
+import DailySummary from '@/pages/summary/DailySummary';
 import NotFound from '@/pages/NotFound';
 import Onboarding from '@/pages/onboarding/Onboarding';
 import WeeklyPlanning from '@/pages/planning/WeeklyPlanning';
@@ -58,6 +59,9 @@ export default function AppRoutes() {
         <Route path="/tasks/notion" element={<TasksNotionView />} />
         <Route path="/tasks/completed" element={<Completed />} />
         <Route path="/tasks/by-category" element={<ByCategory />} />
+
+        {/* Resumo */}
+        <Route path="/summary/daily" element={<DailySummary />} />
 
         {/* Planejamento */}
         <Route path="/planning/weekly" element={<WeeklyPlanning />} />
