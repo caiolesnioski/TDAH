@@ -1,9 +1,9 @@
 import { Outlet } from 'react-router-dom';
 import { CalendarDays } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { AppSidebar } from '@/components/app-sidebar';
+import Sidebar from './Sidebar';
 import { WeeklyPlanningBanner } from '@/components/WeeklyPlanningBanner';
 import TaskFocusModal from '@/components/TaskFocusModal';
+import FloatingTimer from '@/components/FloatingTimer';
 import { CalendarPanel } from '@/components/CalendarPanel';
 import { useCalendarPanelStore } from '@/store/calendarPanelStore';
 
@@ -11,9 +11,9 @@ export default function AppLayout() {
   const toggle = useCalendarPanelStore((s) => s.toggle);
 
   return (
-    <SidebarProvider defaultOpen={false}>
-      <AppSidebar />
-      <div className="flex flex-col flex-1 min-w-0">
+    <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <Sidebar />
+      <div style={{ marginLeft: '48px', flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <header className="flex items-center justify-between px-4 h-16 border-b border-base-300 shrink-0">
           <div />
           <button
@@ -24,7 +24,7 @@ export default function AppLayout() {
             <CalendarDays size={18} />
           </button>
         </header>
-        <main className="flex-1 overflow-y-auto">
+        <main style={{ flex: 1, overflowY: 'auto' }}>
           <WeeklyPlanningBanner />
           <div className="p-6">
             <Outlet />
@@ -32,7 +32,8 @@ export default function AppLayout() {
         </main>
       </div>
       <TaskFocusModal />
+      <FloatingTimer />
       <CalendarPanel />
-    </SidebarProvider>
+    </div>
   );
 }

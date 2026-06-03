@@ -21,7 +21,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar';
 import { useAuth } from '@/context/AuthContext';
 
@@ -60,7 +59,6 @@ const navSections = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useAuth();
-  const { setOpen } = useSidebar();
   const userData = {
     name: user?.name || 'Usuário',
     email: user?.email || '',
@@ -70,8 +68,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar
       collapsible="icon"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
       {...props}
     >
       <SidebarHeader>
