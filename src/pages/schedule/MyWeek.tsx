@@ -20,18 +20,18 @@ const HOUR_PX = 64;
 const START_HOUR = 6;
 const END_HOUR = 23;
 
-const BLOCK_STYLES: Record<string, string> = {
-  [TimeBlockType.WORK]:  'bg-blue-500/20 border-l-2 border-blue-500 text-blue-300',
-  [TimeBlockType.CLASS]: 'bg-purple-500/20 border-l-2 border-purple-500 text-purple-300',
-  [TimeBlockType.FIXED]: 'bg-orange-500/20 border-l-2 border-orange-500 text-orange-300',
-  [TimeBlockType.TASK]:  'bg-green-500/20 border-l-2 border-green-500 text-green-300',
+const BLOCK_STYLES: Record<string, { bg: string; borderColor: string; color: string }> = {
+  [TimeBlockType.WORK]:  { bg: 'var(--color-focus-bg)',  borderColor: 'var(--color-focus)',  color: 'var(--color-focus)' },
+  [TimeBlockType.CLASS]: { bg: 'var(--color-reward-bg)', borderColor: 'var(--color-reward)', color: 'var(--color-reward)' },
+  [TimeBlockType.FIXED]: { bg: 'var(--color-action-bg)', borderColor: 'var(--color-action)', color: 'var(--color-action)' },
+  [TimeBlockType.TASK]:  { bg: 'var(--color-done-bg)',   borderColor: 'var(--color-done)',   color: 'var(--color-done)' },
 };
 
-const BLOCK_DOT: Record<string, string> = {
-  [TimeBlockType.WORK]:  'bg-blue-500',
-  [TimeBlockType.CLASS]: 'bg-purple-500',
-  [TimeBlockType.FIXED]: 'bg-orange-500',
-  [TimeBlockType.TASK]:  'bg-green-500',
+const BLOCK_DOT_COLOR: Record<string, string> = {
+  [TimeBlockType.WORK]:  'var(--color-focus)',
+  [TimeBlockType.CLASS]: 'var(--color-reward)',
+  [TimeBlockType.FIXED]: 'var(--color-action)',
+  [TimeBlockType.TASK]:  'var(--color-done)',
 };
 
 const BLOCK_LABEL: Record<string, string> = {
@@ -41,18 +41,18 @@ const BLOCK_LABEL: Record<string, string> = {
   [TimeBlockType.TASK]:  'Tarefa',
 };
 
-const TASK_CAT_STYLES: Record<number, string> = {
-  [TaskCategory.STUDY]:   'bg-indigo-500/20 border-l-2 border-indigo-500 text-indigo-300',
-  [TaskCategory.WORK]:    'bg-blue-500/20 border-l-2 border-blue-400 text-blue-200',
-  [TaskCategory.HOME]:    'bg-green-500/20 border-l-2 border-green-500 text-green-300',
-  [TaskCategory.HEALTH]:  'bg-rose-500/20 border-l-2 border-rose-500 text-rose-300',
-  [TaskCategory.LEISURE]: 'bg-purple-500/20 border-l-2 border-purple-500 text-purple-300',
-  [TaskCategory.OTHER]:   'bg-zinc-500/20 border-l-2 border-zinc-500 text-zinc-300',
+const TASK_CAT_STYLES: Record<number, { bg: string; borderColor: string; color: string }> = {
+  [TaskCategory.STUDY]:   { bg: 'var(--color-reward-bg)', borderColor: 'var(--color-reward)', color: 'var(--color-reward)' },
+  [TaskCategory.WORK]:    { bg: 'var(--color-focus-bg)',  borderColor: 'var(--color-focus)',  color: 'var(--color-focus)' },
+  [TaskCategory.HOME]:    { bg: 'var(--color-done-bg)',   borderColor: 'var(--color-done)',   color: 'var(--color-done)' },
+  [TaskCategory.HEALTH]:  { bg: 'var(--color-alert-bg)',  borderColor: 'var(--color-alert)',  color: 'var(--color-alert)' },
+  [TaskCategory.LEISURE]: { bg: 'var(--color-action-bg)', borderColor: 'var(--color-action)', color: 'var(--color-action)' },
+  [TaskCategory.OTHER]:   { bg: 'var(--color-surface-2)', borderColor: 'var(--color-text-muted)', color: 'var(--color-text-muted)' },
 };
 
 function getWeekMonday(offset: number): dayjs.Dayjs {
   const today = dayjs();
-  const dow = today.day(); // 0 = Sun
+  const dow = today.day();
   const daysBack = dow === 0 ? 6 : dow - 1;
   return today.subtract(daysBack, 'day').startOf('day').add(offset * 7, 'day');
 }
@@ -135,68 +135,71 @@ export default function MyWeek() {
 
   return (
     <div className="-mx-6 -mt-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
-      {/* ── Page header ── */}
-      <div className="shrink-0 flex items-center justify-between px-6 py-3 border-b border-base-300 bg-base-100">
-        <div className="flex items-center gap-3">
-          <CalendarDays size={20} className="text-primary" />
+      {/* Page header */}
+      <div style={{flexShrink:0,display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 24px',borderBottom:'1px solid var(--color-border)',background:'var(--color-surface)'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+          <CalendarDays size={20} style={{color:'var(--color-action)'}} />
           <div>
-            <h1 className="text-base font-semibold leading-tight">Minha Semana</h1>
-            <p className="text-xs text-base-content/50">{weekRange}</p>
+            <h1 style={{fontSize:'15px',fontWeight:600,lineHeight:'1.2',color:'var(--color-text)'}}>Minha Semana</h1>
+            <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>{weekRange}</p>
           </div>
-          <span className="text-[11px] bg-base-300 text-base-content/60 rounded-full px-2 py-0.5">
+          <span style={{fontSize:'11px',background:'var(--color-surface-2)',color:'var(--color-text-muted)',borderRadius:'999px',padding:'2px 8px'}}>
             {totalEvents} compromisso{totalEvents !== 1 ? 's' : ''}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
           <div className="hidden lg:flex items-center gap-4 mr-2">
             {Object.entries(BLOCK_LABEL).map(([type, label]) => (
-              <div key={type} className="flex items-center gap-1.5">
-                <div className={`w-2 h-2 rounded-full ${BLOCK_DOT[type]}`} />
-                <span className="text-xs text-base-content/60">{label}</span>
+              <div key={type} style={{display:'flex',alignItems:'center',gap:'6px'}}>
+                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:BLOCK_DOT_COLOR[type]}} />
+                <span style={{fontSize:'11px',color:'var(--color-text-sec)'}}>{label}</span>
               </div>
             ))}
           </div>
-          <button onClick={() => setWeekOffset(0)} className="btn btn-ghost btn-sm text-xs">
+          <button
+            onClick={() => setWeekOffset(0)}
+            style={{background:'transparent',border:'1px solid var(--color-border)',borderRadius:'8px',padding:'4px 10px',fontSize:'12px',color:'var(--color-text-sec)',cursor:'pointer'}}
+          >
             Hoje
           </button>
           <button
             onClick={() => setWeekOffset(w => w - 1)}
-            className="btn btn-ghost btn-sm btn-square"
+            style={{background:'transparent',border:'1px solid var(--color-border)',borderRadius:'8px',padding:'4px 8px',color:'var(--color-text-sec)',cursor:'pointer',display:'flex',alignItems:'center'}}
           >
             <ChevronLeft size={15} />
           </button>
           <button
             onClick={() => setWeekOffset(w => w + 1)}
-            className="btn btn-ghost btn-sm btn-square"
+            style={{background:'transparent',border:'1px solid var(--color-border)',borderRadius:'8px',padding:'4px 8px',color:'var(--color-text-sec)',cursor:'pointer',display:'flex',alignItems:'center'}}
           >
             <ChevronRight size={15} />
           </button>
         </div>
       </div>
 
-      {/* ── Calendar body (scrollable) ── */}
+      {/* Calendar body */}
       <div ref={scrollRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
-        {/* Sticky day-column headers */}
-        <div className="sticky top-0 z-20 flex bg-base-100/95 backdrop-blur-sm border-b border-base-300">
-          <div className="w-14 shrink-0" />
+        {/* Sticky day headers */}
+        <div style={{position:'sticky',top:0,zIndex:20,display:'flex',background:'var(--color-surface)',borderBottom:'1px solid var(--color-border)'}}>
+          <div style={{width:'56px',flexShrink:0}} />
           {weekDays.map(d => {
             const isToday = d.dateStr === today;
             return (
               <div
                 key={d.dateStr}
-                className="flex-1 py-2 flex flex-col items-center gap-0.5 border-r border-base-300/40 last:border-r-0"
+                style={{flex:1,padding:'8px 0',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',borderRight:'1px solid rgba(0,0,0,0.06)'}}
+                className="last:border-r-0"
               >
-                <span className="text-[10px] text-base-content/40 uppercase tracking-wide">
+                <span style={{fontSize:'10px',color:'var(--color-text-muted)',textTransform:'uppercase',letterSpacing:'0.05em'}}>
                   {d.label}
                 </span>
-                <span
-                  className={`w-7 h-7 flex items-center justify-center rounded-full text-sm font-medium ${
-                    isToday
-                      ? 'bg-primary text-primary-content'
-                      : 'text-base-content'
-                  }`}
-                >
+                <span style={{
+                  width:'28px',height:'28px',display:'flex',alignItems:'center',justifyContent:'center',
+                  borderRadius:'50%',fontSize:'13px',fontWeight:500,
+                  background: isToday ? 'var(--color-action)' : 'transparent',
+                  color: isToday ? '#1E1E1C' : 'var(--color-text)',
+                }}>
                   {d.date.date()}
                 </span>
               </div>
@@ -206,43 +209,41 @@ export default function MyWeek() {
 
         {/* All-day tasks row */}
         {hasAnyTasks && (
-          <div className="flex border-b border-base-300/40 bg-base-200/20">
-            <div className="w-14 shrink-0 flex items-center justify-end pr-2 py-1">
-              <span className="text-[10px] text-base-content/30 text-right leading-tight">
+          <div style={{display:'flex',borderBottom:'1px solid rgba(0,0,0,0.06)',background:'var(--color-surface-2)'}}>
+            <div style={{width:'56px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'flex-end',padding:'4px 8px 4px 0'}}>
+              <span style={{fontSize:'10px',color:'var(--color-text-muted)',textAlign:'right',lineHeight:'1.3'}}>
                 dia<br />todo
               </span>
             </div>
             {weekDays.map(d => (
               <div
                 key={d.dateStr}
-                className="flex-1 min-h-[28px] px-1 py-1 flex flex-col gap-0.5 border-r border-base-300/30 last:border-r-0"
+                style={{flex:1,minHeight:'28px',padding:'4px',display:'flex',flexDirection:'column',gap:'2px',borderRight:'1px solid rgba(0,0,0,0.06)'}}
+                className="last:border-r-0"
               >
-                {tasksByDate[d.dateStr]?.map(t => (
-                  <div
-                    key={t.id}
-                    className={`text-[10px] px-1.5 py-0.5 rounded-sm truncate ${
-                      TASK_CAT_STYLES[t.category] ?? TASK_CAT_STYLES[TaskCategory.OTHER]
-                    }`}
-                  >
-                    {t.title}
-                  </div>
-                ))}
+                {tasksByDate[d.dateStr]?.map(t => {
+                  const s = TASK_CAT_STYLES[t.category] ?? TASK_CAT_STYLES[TaskCategory.OTHER];
+                  return (
+                    <div key={t.id} style={{fontSize:'10px',padding:'2px 6px',borderRadius:'4px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:s.bg,borderLeft:`2px solid ${s.borderColor}`,color:s.color}}>
+                      {t.title}
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
         )}
 
         {/* Time grid */}
-        <div className="flex">
+        <div style={{display:'flex'}}>
           {/* Hour labels */}
-          <div className="w-14 shrink-0">
+          <div style={{width:'56px',flexShrink:0}}>
             {HOURS.map(h => (
               <div
                 key={h}
-                style={{ height: HOUR_PX }}
-                className="border-b border-base-300/20 flex items-start justify-end pr-2 pt-1"
+                style={{height:HOUR_PX,borderBottom:'1px solid rgba(0,0,0,0.04)',display:'flex',alignItems:'flex-start',justifyContent:'flex-end',padding:'4px 8px 0 0'}}
               >
-                <span className="text-[11px] text-base-content/30">
+                <span style={{fontSize:'11px',color:'var(--color-text-muted)'}}>
                   {String(h).padStart(2, '0')}:00
                 </span>
               </div>
@@ -250,7 +251,7 @@ export default function MyWeek() {
           </div>
 
           {/* Day columns */}
-          <div className="flex flex-1">
+          <div style={{display:'flex',flex:1}}>
             {weekDays.map(d => {
               const isWeekend = d.dow === 0 || d.dow === 6;
               const dayBlocks = blocksByDow[d.dow] ?? [];
@@ -258,27 +259,19 @@ export default function MyWeek() {
               return (
                 <div
                   key={d.dateStr}
-                  className={`flex-1 relative border-r border-base-300/30 last:border-r-0 ${
-                    isWeekend ? 'bg-base-200/15' : ''
-                  }`}
+                  style={{flex:1,position:'relative',borderRight:'1px solid rgba(0,0,0,0.06)',background:isWeekend?'rgba(0,0,0,0.015)':'transparent'}}
+                  className="last:border-r-0"
                 >
                   {/* Hour grid lines */}
                   {HOURS.map(h => (
-                    <div
-                      key={h}
-                      style={{ height: HOUR_PX }}
-                      className="border-b border-base-300/20"
-                    />
+                    <div key={h} style={{height:HOUR_PX,borderBottom:'1px solid rgba(0,0,0,0.04)'}} />
                   ))}
 
                   {/* Current time indicator */}
                   {d.dateStr === today && nowTop !== null && (
-                    <div
-                      style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 15 }}
-                      className="pointer-events-none"
-                    >
-                      <div className="relative h-px bg-primary/70">
-                        <div className="absolute -left-0.5 top-[-3px] w-2 h-2 rounded-full bg-primary" />
+                    <div style={{position:'absolute',top:nowTop,left:0,right:0,zIndex:15,pointerEvents:'none'}}>
+                      <div style={{position:'relative',height:'1px',background:'var(--color-focus)',opacity:0.7}}>
+                        <div style={{position:'absolute',left:'-2px',top:'-3px',width:'7px',height:'7px',borderRadius:'50%',background:'var(--color-focus)'}} />
                       </div>
                     </div>
                   )}
@@ -290,19 +283,18 @@ export default function MyWeek() {
                     if (startMin < START_HOUR * 60 || startMin >= END_HOUR * 60) return null;
                     const top = ((startMin - START_HOUR * 60) / 60) * HOUR_PX;
                     const height = Math.max(22, ((endMin - startMin) / 60) * HOUR_PX);
-                    const cls = BLOCK_STYLES[block.type] ?? BLOCK_STYLES[TimeBlockType.WORK];
+                    const bs = BLOCK_STYLES[block.type] ?? BLOCK_STYLES[TimeBlockType.WORK];
                     return (
                       <div
                         key={block.id}
-                        style={{ position: 'absolute', top, height, left: 2, right: 2, zIndex: 10 }}
-                        className={`rounded-r-md overflow-hidden ${cls}`}
+                        style={{position:'absolute',top,height,left:2,right:2,zIndex:10,background:bs.bg,borderLeft:`2px solid ${bs.borderColor}`,borderRadius:'0 6px 6px 0',overflow:'hidden'}}
                       >
-                        <div className="p-1 h-full overflow-hidden">
-                          <p className="text-xs font-medium truncate leading-tight">
+                        <div style={{padding:'4px',height:'100%',overflow:'hidden'}}>
+                          <p style={{fontSize:'12px',fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',lineHeight:'1.2',color:bs.color}}>
                             {block.title}
                           </p>
                           {height > 30 && (
-                            <p className="text-[10px] opacity-70">
+                            <p style={{fontSize:'10px',opacity:0.7,color:bs.color}}>
                               {block.startTime} – {block.endTime}
                             </p>
                           )}

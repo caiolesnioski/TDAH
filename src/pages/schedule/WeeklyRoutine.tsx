@@ -1,10 +1,4 @@
 import { useState } from 'react';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import {
   Clock,
   Plus,
@@ -12,11 +6,12 @@ import {
   Briefcase,
   GraduationCap,
   CalendarClock,
+  CalendarRange,
   Save,
   RotateCcw,
 } from 'lucide-react';
 import { TimeBlockType } from '@/types';
-import { cn } from '@/lib/utils';
+import type { TimeBlock } from '@/types';
 
 const DAYS_OF_WEEK = [
   { value: 0, label: 'Domingo', short: 'Dom' },
@@ -32,46 +27,49 @@ const BLOCK_TYPE_CONFIG = {
   [TimeBlockType.WORK]: {
     label: 'Trabalho',
     icon: Briefcase,
-    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-300',
+    borderColor: 'var(--color-focus)',
+    bg: 'var(--color-focus-bg)',
+    textColor: 'var(--color-focus)',
   },
   [TimeBlockType.CLASS]: {
     label: 'Aula',
     icon: GraduationCap,
-    color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300 border-orange-300',
+    borderColor: 'var(--color-reward)',
+    bg: 'var(--color-reward-bg)',
+    textColor: 'var(--color-reward)',
   },
   [TimeBlockType.FIXED]: {
     label: 'Compromisso',
     icon: CalendarClock,
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-300',
+    borderColor: 'var(--color-action)',
+    bg: 'var(--color-action-bg)',
+    textColor: 'var(--color-action)',
   },
   [TimeBlockType.TASK]: {
     label: 'Tarefa',
     icon: Clock,
-    color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-300',
+    borderColor: 'var(--color-done)',
+    bg: 'var(--color-done-bg)',
+    textColor: 'var(--color-done)',
   },
 };
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
 
-// Load from localStorage
 const loadBlocks = (): TimeBlock[] => {
   try {
     const saved = localStorage.getItem('weeklyRoutine');
-    if (saved) {
-      return JSON.parse(saved);
-    }
+    if (saved) return JSON.parse(saved);
   } catch {
     // ignore
   }
   return [];
 };
 
-// Save to localStorage
 const saveBlocks = (blocks: TimeBlock[]) => {
   localStorage.setItem('weeklyRoutine', JSON.stringify(blocks));
 };
 
-// Formatar data para exibição
 const formatDate = (dateStr: string | undefined): string => {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -81,13 +79,62 @@ const formatDate = (dateStr: string | undefined): string => {
 interface NewBlockForm {
   title: string;
   type: TimeBlockType;
-  daysOfWeek: number[]; // Múltiplos dias
+  daysOfWeek: number[];
   startTime: string;
   endTime: string;
   isRecurring: boolean;
-  validFrom: string; // Data início
-  validUntil: string; // Data fim
+  validFrom: string;
+  validUntil: string;
 }
+
+function ConfirmModal({ open, title, message, confirmLabel, onConfirm, onCancel }: {
+  open: boolean; title: string; message: string; confirmLabel: string;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+      <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', maxWidth: '400px', width: '90%' }}>
+        <h3 style={{ color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', margin: '0 0 8px 0' }}>{title}</h3>
+        <p style={{ color: 'var(--color-text-sec)', fontSize: '14px', margin: '0 0 20px 0' }}>{message}</p>
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '14px' }}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ background: 'transparent', color: 'var(--color-alert)', border: '1px solid var(--color-alert)', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontSize: '14px', fontWeight: 500 }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'var(--color-surface-2)',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '8px',
+  padding: '8px 12px',
+  width: '100%',
+  fontSize: '14px',
+  outline: 'none',
+  boxSizing: 'border-box' as const,
+};
+
+const labelStyle: React.CSSProperties = {
+  color: 'var(--color-text-sec)',
+  fontSize: '13px',
+  fontWeight: 500,
+  display: 'block',
+  marginBottom: '4px',
+};
 
 export default function WeeklyRoutine() {
   const [blocks, setBlocks] = useState<TimeBlock[]>(loadBlocks);
@@ -95,13 +142,12 @@ export default function WeeklyRoutine() {
   const [confirmClearAll, setConfirmClearAll] = useState(false);
   const [blockToDelete, setBlockToDelete] = useState<string | null>(null);
 
-  // Data de hoje formatada para input date
   const today = new Date().toISOString().split('T')[0];
 
   const [newBlock, setNewBlock] = useState<NewBlockForm>({
     title: '',
     type: TimeBlockType.WORK,
-    daysOfWeek: [1], // Segunda por padrão
+    daysOfWeek: [1],
     startTime: '09:00',
     endTime: '18:00',
     isRecurring: true,
@@ -109,47 +155,24 @@ export default function WeeklyRoutine() {
     validUntil: '',
   });
 
-  // Toggle dia da semana
   const toggleDay = (dayValue: number) => {
     setNewBlock((prev) => {
       const isSelected = prev.daysOfWeek.includes(dayValue);
       if (isSelected) {
-        // Não permite desmarcar se for o único dia selecionado
         if (prev.daysOfWeek.length === 1) return prev;
-        return {
-          ...prev,
-          daysOfWeek: prev.daysOfWeek.filter((d) => d !== dayValue),
-        };
-      } else {
-        return {
-          ...prev,
-          daysOfWeek: [...prev.daysOfWeek, dayValue].sort((a, b) => a - b),
-        };
+        return { ...prev, daysOfWeek: prev.daysOfWeek.filter((d) => d !== dayValue) };
       }
+      return { ...prev, daysOfWeek: [...prev.daysOfWeek, dayValue].sort((a, b) => a - b) };
     });
   };
 
-  // Selecionar dias úteis (Seg-Sex)
-  const selectWeekdays = () => {
-    setNewBlock((prev) => ({
-      ...prev,
-      daysOfWeek: [1, 2, 3, 4, 5],
-    }));
-  };
-
-  // Selecionar todos os dias
-  const selectAllDays = () => {
-    setNewBlock((prev) => ({
-      ...prev,
-      daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
-    }));
-  };
+  const selectWeekdays = () => setNewBlock((prev) => ({ ...prev, daysOfWeek: [1, 2, 3, 4, 5] }));
+  const selectAllDays = () => setNewBlock((prev) => ({ ...prev, daysOfWeek: [0, 1, 2, 3, 4, 5, 6] }));
 
   const handleAddBlock = () => {
     if (!newBlock.title.trim()) return;
     if (newBlock.daysOfWeek.length === 0) return;
 
-    // Cria um bloco para cada dia selecionado
     const newBlocks: TimeBlock[] = newBlock.daysOfWeek.map((day) => ({
       id: generateId(),
       title: newBlock.title,
@@ -190,7 +213,6 @@ export default function WeeklyRoutine() {
     localStorage.removeItem('weeklyRoutine');
   };
 
-  // Group blocks by day
   const blocksByDay = DAYS_OF_WEEK.map((day) => ({
     ...day,
     blocks: blocks
@@ -200,320 +222,309 @@ export default function WeeklyRoutine() {
 
   return (
     <>
-        <div className="flex flex-1 flex-col">
-          <div className="@container/main flex flex-1 flex-col gap-6 p-4 md:p-6 bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900 min-h-screen">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                  <Clock className="h-6 w-6 text-focus-blue-500" />
-                  Minha Rotina Semanal
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Configure seus horários fixos de trabalho, aulas e compromissos.
-                </p>
-              </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px', background: 'var(--color-bg)', minHeight: '100vh' }}>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setConfirmClearAll(true)}
-                  disabled={blocks.length === 0}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Limpar Tudo
-                </Button>
-                <Button
-                  onClick={() => setShowAddForm(!showAddForm)}
-                  className="bg-gradient-to-r from-focus-blue-500 to-calm-purple-500"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Horário
-                </Button>
-              </div>
-            </div>
+        {/* Header */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+          <div>
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 4px 0' }}>
+              <Clock style={{ width: '22px', height: '22px', color: 'var(--color-focus)' }} />
+              Minha Rotina Semanal
+            </h1>
+            <p style={{ color: 'var(--color-text-sec)', fontSize: '14px', margin: 0 }}>
+              Configure seus horários fixos de trabalho, aulas e compromissos.
+            </p>
+          </div>
 
-            {/* Add Form */}
-            {showAddForm && (
-              <Card className="border-2 border-dashed border-focus-blue-300 dark:border-focus-blue-700">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-focus-blue-500" />
-                    Novo Horário
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Linha 1: Título e Tipo */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Título</Label>
-                      <Input
-                        id="title"
-                        placeholder="Ex: Trabalho, Faculdade, Estágio..."
-                        value={newBlock.title}
-                        onChange={(e) => setNewBlock({ ...newBlock, title: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="type">Tipo</Label>
-                      <select
-                        id="type"
-                        value={newBlock.type}
-                        onChange={(e) => setNewBlock({ ...newBlock, type: e.target.value as TimeBlockType })}
-                        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      >
-                        {Object.entries(BLOCK_TYPE_CONFIG).map(([key, config]) => (
-                          <option key={key} value={key}>
-                            {config.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Linha 2: Dias da Semana */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Dias da Semana</Label>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={selectWeekdays}
-                          className="text-xs h-7"
-                        >
-                          Seg-Sex
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={selectAllDays}
-                          className="text-xs h-7"
-                        >
-                          Todos
-                        </Button>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {DAYS_OF_WEEK.map((day) => {
-                        const isSelected = newBlock.daysOfWeek.includes(day.value);
-                        return (
-                          <button
-                            key={day.value}
-                            type="button"
-                            onClick={() => toggleDay(day.value)}
-                            className={cn(
-                              'px-3 py-2 rounded-lg text-sm font-medium transition-all border-2',
-                              isSelected
-                                ? 'bg-focus-blue-500 text-white border-focus-blue-500'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-transparent hover:border-focus-blue-300'
-                            )}
-                          >
-                            {day.short}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {newBlock.daysOfWeek.length === 1
-                        ? '1 dia selecionado'
-                        : `${newBlock.daysOfWeek.length} dias selecionados`}
-                    </p>
-                  </div>
-
-                  {/* Linha 3: Horários */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="start">Hora Início</Label>
-                      <Input
-                        id="start"
-                        type="time"
-                        value={newBlock.startTime}
-                        onChange={(e) => setNewBlock({ ...newBlock, startTime: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="end">Hora Fim</Label>
-                      <Input
-                        id="end"
-                        type="time"
-                        value={newBlock.endTime}
-                        onChange={(e) => setNewBlock({ ...newBlock, endTime: e.target.value })}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Linha 4: Repetição */}
-                  <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CalendarRange className="h-4 w-4 text-focus-blue-500" />
-                        <Label className="font-medium">Repetir toda semana</Label>
-                      </div>
-                      <Switch
-                        checked={newBlock.isRecurring}
-                        onCheckedChange={(checked) => setNewBlock({ ...newBlock, isRecurring: checked })}
-                      />
-                    </div>
-
-                    {newBlock.isRecurring && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                        <div className="space-y-2">
-                          <Label htmlFor="validFrom">A partir de</Label>
-                          <Input
-                            id="validFrom"
-                            type="date"
-                            value={newBlock.validFrom}
-                            onChange={(e) => setNewBlock({ ...newBlock, validFrom: e.target.value })}
-                            min={today}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="validUntil">Até (opcional)</Label>
-                          <Input
-                            id="validUntil"
-                            type="date"
-                            value={newBlock.validUntil}
-                            onChange={(e) => setNewBlock({ ...newBlock, validUntil: e.target.value })}
-                            min={newBlock.validFrom || today}
-                            placeholder="Sem data fim"
-                          />
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            Deixe vazio para repetir indefinidamente
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Linha 5: Botões */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      onClick={handleAddBlock}
-                      disabled={!newBlock.title.trim() || newBlock.daysOfWeek.length === 0}
-                      className="flex-1 bg-focus-blue-500 hover:bg-focus-blue-600"
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      Salvar {newBlock.daysOfWeek.length > 1 ? `(${newBlock.daysOfWeek.length} dias)` : ''}
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
-                      Cancelar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Weekly Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
-              {blocksByDay.map((day) => (
-                <Card key={day.value} className="border-0 shadow-lg bg-white dark:bg-gray-800">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center justify-between">
-                      {day.label}
-                      <Badge variant="outline" className="text-xs">
-                        {day.blocks.length}
-                      </Badge>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 min-h-[200px]">
-                    {day.blocks.length > 0 ? (
-                      day.blocks.map((block) => {
-                        const config = BLOCK_TYPE_CONFIG[block.type];
-                        const Icon = config.icon;
-
-                        return (
-                          <div
-                            key={block.id}
-                            className={cn(
-                              'p-2 rounded-lg border text-xs group relative',
-                              config.color
-                            )}
-                          >
-                            <div className="flex items-center gap-1 mb-1">
-                              <Icon className="h-3 w-3" />
-                              <span className="font-medium truncate">{block.title}</span>
-                            </div>
-                            <div className="text-xs opacity-75">
-                              {block.startTime} - {block.endTime}
-                            </div>
-                            {block.isRecurring && (block.validFrom || block.validUntil) && (
-                              <div className="text-[10px] opacity-60 mt-1">
-                                {block.validFrom && formatDate(block.validFrom)}
-                                {block.validUntil && ` - ${formatDate(block.validUntil)}`}
-                              </div>
-                            )}
-                            <button
-                              onClick={() => setBlockToDelete(block.id)}
-                              className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-opacity"
-                            >
-                              <Trash2 className="h-3 w-3 text-red-500" />
-                            </button>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-gray-400 text-xs">
-                        Nenhum horário
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-
-            {/* Summary */}
-            <Card className="border-0 shadow-lg bg-white dark:bg-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg text-gray-800 dark:text-white">Resumo da Semana</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {Object.entries(BLOCK_TYPE_CONFIG).map(([type, config]) => {
-                    const count = blocks.filter((b) => b.type === type).length;
-                    const Icon = config.icon;
-
-                    return (
-                      <div key={type} className={cn('p-4 rounded-xl', config.color)}>
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-5 w-5" />
-                          <span className="font-medium">{config.label}</span>
-                        </div>
-                        <p className="text-2xl font-bold mt-2">{count}</p>
-                        <p className="text-xs opacity-75">horários</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => setConfirmClearAll(true)}
+              disabled={blocks.length === 0}
+              style={{ background: 'transparent', color: 'var(--color-alert)', border: 'none', borderRadius: '8px', padding: '8px 12px', cursor: blocks.length === 0 ? 'not-allowed' : 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px', opacity: blocks.length === 0 ? 0.4 : 1 }}
+            >
+              <RotateCcw style={{ width: '15px', height: '15px' }} />
+              Limpar Tudo
+            </button>
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              style={{ background: 'var(--color-action)', color: '#1E1E1C', border: 'none', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', fontWeight: 500, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Plus style={{ width: '16px', height: '16px' }} />
+              Adicionar Horário
+            </button>
           </div>
         </div>
 
-    <ConfirmDialog
-      open={confirmClearAll}
-      title="Limpar toda a rotina"
-      message="Tem certeza que deseja remover todos os horários? Essa ação não pode ser desfeita."
-      confirmLabel="Limpar Tudo"
-      onConfirm={() => { handleClearAll(); setConfirmClearAll(false); }}
-      onCancel={() => setConfirmClearAll(false)}
-    />
+        {/* Add Form */}
+        {showAddForm && (
+          <div style={{ background: 'var(--color-surface)', border: '2px dashed var(--color-focus)', borderRadius: '12px', padding: '20px' }}>
+            <h2 style={{ color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '16px', marginTop: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Plus style={{ width: '18px', height: '18px', color: 'var(--color-focus)' }} />
+              Novo Horário
+            </h2>
 
-    <ConfirmDialog
-      open={!!blockToDelete}
-      title="Remover horário"
-      message="Tem certeza que deseja remover esse horário da sua rotina?"
-      confirmLabel="Remover"
-      onConfirm={() => {
-        if (blockToDelete) handleRemoveBlock(blockToDelete);
-        setBlockToDelete(null);
-      }}
-      onCancel={() => setBlockToDelete(null)}
-    />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={labelStyle} htmlFor="title">Título</label>
+                <input
+                  id="title"
+                  style={inputStyle}
+                  placeholder="Ex: Trabalho, Faculdade, Estágio..."
+                  value={newBlock.title}
+                  onChange={(e) => setNewBlock({ ...newBlock, title: e.target.value })}
+                />
+              </div>
+              <div>
+                <label style={labelStyle} htmlFor="type">Tipo</label>
+                <select
+                  id="type"
+                  value={newBlock.type}
+                  onChange={(e) => setNewBlock({ ...newBlock, type: e.target.value as TimeBlockType })}
+                  style={{ ...inputStyle, height: '37px' }}
+                >
+                  {Object.entries(BLOCK_TYPE_CONFIG).map(([key, config]) => (
+                    <option key={key} value={key}>{config.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Dias da Semana */}
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Dias da Semana</label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    onClick={selectWeekdays}
+                    style={{ background: 'transparent', color: 'var(--color-text-sec)', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer' }}
+                  >
+                    Seg–Sex
+                  </button>
+                  <button
+                    type="button"
+                    onClick={selectAllDays}
+                    style={{ background: 'transparent', color: 'var(--color-text-sec)', border: '1px solid var(--color-border)', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', cursor: 'pointer' }}
+                  >
+                    Todos
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {DAYS_OF_WEEK.map((day) => {
+                  const isSelected = newBlock.daysOfWeek.includes(day.value);
+                  return (
+                    <button
+                      key={day.value}
+                      type="button"
+                      onClick={() => toggleDay(day.value)}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        border: isSelected ? '2px solid var(--color-focus)' : '2px solid var(--color-border)',
+                        background: isSelected ? 'var(--color-focus-bg)' : 'var(--color-surface-2)',
+                        color: isSelected ? 'var(--color-focus)' : 'var(--color-text-sec)',
+                        transition: 'all 0.15s',
+                      }}
+                    >
+                      {day.short}
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px', marginBottom: 0 }}>
+                {newBlock.daysOfWeek.length === 1 ? '1 dia selecionado' : `${newBlock.daysOfWeek.length} dias selecionados`}
+              </p>
+            </div>
+
+            {/* Horários */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+              <div>
+                <label style={labelStyle} htmlFor="start">Hora Início</label>
+                <input
+                  id="start" type="time"
+                  value={newBlock.startTime}
+                  onChange={(e) => setNewBlock({ ...newBlock, startTime: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle} htmlFor="end">Hora Fim</label>
+                <input
+                  id="end" type="time"
+                  value={newBlock.endTime}
+                  onChange={(e) => setNewBlock({ ...newBlock, endTime: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* Repetição */}
+            <div style={{ background: 'var(--color-surface-2)', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: newBlock.isRecurring ? '16px' : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <CalendarRange style={{ width: '16px', height: '16px', color: 'var(--color-focus)' }} />
+                  <label style={{ ...labelStyle, marginBottom: 0, fontWeight: 500 }}>Repetir toda semana</label>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={newBlock.isRecurring}
+                  onChange={(e) => setNewBlock({ ...newBlock, isRecurring: e.target.checked })}
+                  style={{ width: '18px', height: '18px', accentColor: 'var(--color-action)', cursor: 'pointer' }}
+                />
+              </div>
+
+              {newBlock.isRecurring && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                  <div>
+                    <label style={labelStyle} htmlFor="validFrom">A partir de</label>
+                    <input
+                      id="validFrom" type="date"
+                      value={newBlock.validFrom}
+                      onChange={(e) => setNewBlock({ ...newBlock, validFrom: e.target.value })}
+                      min={today}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle} htmlFor="validUntil">Até (opcional)</label>
+                    <input
+                      id="validUntil" type="date"
+                      value={newBlock.validUntil}
+                      onChange={(e) => setNewBlock({ ...newBlock, validUntil: e.target.value })}
+                      min={newBlock.validFrom || today}
+                      style={inputStyle}
+                    />
+                    <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px', marginBottom: 0 }}>
+                      Deixe vazio para repetir indefinidamente
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Botões do form */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={handleAddBlock}
+                disabled={!newBlock.title.trim() || newBlock.daysOfWeek.length === 0}
+                style={{ flex: 1, background: 'var(--color-action)', color: '#1E1E1C', border: 'none', borderRadius: '8px', padding: '9px 16px', cursor: !newBlock.title.trim() ? 'not-allowed' : 'pointer', fontWeight: 500, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', opacity: !newBlock.title.trim() ? 0.6 : 1 }}
+              >
+                <Save style={{ width: '16px', height: '16px' }} />
+                Salvar {newBlock.daysOfWeek.length > 1 ? `(${newBlock.daysOfWeek.length} dias)` : ''}
+              </button>
+              <button
+                onClick={() => setShowAddForm(false)}
+                style={{ background: 'transparent', color: 'var(--color-text)', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '9px 16px', cursor: 'pointer', fontSize: '14px' }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Weekly Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '12px' }}>
+          {blocksByDay.map((day) => (
+            <div key={day.value} style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text)' }}>{day.label}</span>
+                <span style={{ background: 'var(--color-action-bg)', color: 'var(--color-action)', borderRadius: '999px', padding: '1px 8px', fontSize: '12px', fontWeight: 500 }}>
+                  {day.blocks.length}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minHeight: '120px' }}>
+                {day.blocks.length > 0 ? (
+                  day.blocks.map((block) => {
+                    const config = BLOCK_TYPE_CONFIG[block.type];
+                    const Icon = config.icon;
+                    return (
+                      <div
+                        key={block.id}
+                        style={{ padding: '6px 8px', borderRadius: '8px', background: config.bg, borderLeft: `3px solid ${config.borderColor}`, fontSize: '12px', position: 'relative' }}
+                        className="group"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                          <Icon style={{ width: '11px', height: '11px', color: config.textColor, flexShrink: 0 }} />
+                          <span style={{ fontWeight: 500, color: 'var(--color-text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{block.title}</span>
+                        </div>
+                        <div style={{ fontSize: '11px', color: 'var(--color-text-sec)' }}>
+                          {block.startTime} - {block.endTime}
+                        </div>
+                        {block.isRecurring && (block.validFrom || block.validUntil) && (
+                          <div style={{ fontSize: '10px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+                            {block.validFrom && formatDate(block.validFrom)}
+                            {block.validUntil && ` - ${formatDate(block.validUntil)}`}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => setBlockToDelete(block.id)}
+                          style={{ position: 'absolute', top: '4px', right: '4px', opacity: 0, background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-alert)' }}
+                          onMouseEnter={(e) => (e.currentTarget.style.opacity = '1')}
+                          onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
+                        >
+                          <Trash2 style={{ width: '12px', height: '12px' }} />
+                        </button>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1, color: 'var(--color-text-muted)', fontSize: '12px' }}>
+                    Nenhum horário
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Resumo */}
+        <div style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '20px' }}>
+          <h2 style={{ color: 'var(--color-text)', fontWeight: 600, fontSize: '16px', marginBottom: '16px', marginTop: 0 }}>Resumo da Semana</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+            {Object.entries(BLOCK_TYPE_CONFIG).map(([type, config]) => {
+              const count = blocks.filter((b) => b.type === type).length;
+              const Icon = config.icon;
+              return (
+                <div key={type} style={{ padding: '16px', borderRadius: '10px', background: config.bg, borderLeft: `3px solid ${config.borderColor}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Icon style={{ width: '18px', height: '18px', color: config.textColor }} />
+                    <span style={{ fontWeight: 500, fontSize: '14px', color: 'var(--color-text)' }}>{config.label}</span>
+                  </div>
+                  <p style={{ fontSize: '24px', fontWeight: 700, color: config.textColor, margin: '0 0 2px 0' }}>{count}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>horários</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </div>
+
+      <ConfirmModal
+        open={confirmClearAll}
+        title="Limpar toda a rotina"
+        message="Tem certeza que deseja remover todos os horários? Essa ação não pode ser desfeita."
+        confirmLabel="Limpar Tudo"
+        onConfirm={() => { handleClearAll(); setConfirmClearAll(false); }}
+        onCancel={() => setConfirmClearAll(false)}
+      />
+
+      <ConfirmModal
+        open={!!blockToDelete}
+        title="Remover horário"
+        message="Tem certeza que deseja remover esse horário da sua rotina?"
+        confirmLabel="Remover"
+        onConfirm={() => {
+          if (blockToDelete) handleRemoveBlock(blockToDelete);
+          setBlockToDelete(null);
+        }}
+        onCancel={() => setBlockToDelete(null)}
+      />
     </>
   );
 }

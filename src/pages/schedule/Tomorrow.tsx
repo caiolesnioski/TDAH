@@ -1,15 +1,13 @@
 import { useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, Sparkles, Lightbulb } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
-import { cn } from '@/lib/utils';
 
-const BLOCK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  [TimeBlockType.WORK]:  { bg: 'bg-blue-100 dark:bg-blue-900/40',    text: 'text-blue-700 dark:text-blue-300',    border: 'border-blue-400' },
-  [TimeBlockType.CLASS]: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-400' },
-  [TimeBlockType.FIXED]: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-400' },
-  [TimeBlockType.TASK]:  { bg: 'bg-green-100 dark:bg-green-900/40',   text: 'text-green-700 dark:text-green-300',  border: 'border-green-400' },
+const BLOCK_COLORS: Record<string, { bg: string; text: string; borderColor: string }> = {
+  [TimeBlockType.WORK]:  { bg: 'var(--color-focus-bg)',  text: 'var(--color-focus)',  borderColor: 'var(--color-focus)' },
+  [TimeBlockType.CLASS]: { bg: 'var(--color-reward-bg)', text: 'var(--color-reward)', borderColor: 'var(--color-reward)' },
+  [TimeBlockType.FIXED]: { bg: 'var(--color-action-bg)', text: 'var(--color-action)', borderColor: 'var(--color-action)' },
+  [TimeBlockType.TASK]:  { bg: 'var(--color-done-bg)',   text: 'var(--color-done)',   borderColor: 'var(--color-done)' },
 };
 
 const DAYS_PT = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -51,107 +49,104 @@ export default function Tomorrow() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
 
-            {/* Header */}
-            <div className="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl p-6 text-white">
-              <div className="flex items-center gap-2 mb-1">
-                <Calendar className="h-5 w-5 opacity-80" />
-                <span className="text-sm opacity-80">Planejamento</span>
+      {/* Hero */}
+      <div style={{background:'var(--color-reward-bg)',borderLeft:'4px solid var(--color-reward)',borderRadius:'12px',padding:'24px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <Calendar style={{width:'20px',height:'20px',color:'var(--color-reward)',opacity:0.7}} />
+          <span style={{fontSize:'13px',color:'var(--color-text-sec)'}}>Planejamento</span>
+        </div>
+        <h1 style={{fontSize:'28px',fontWeight:700,color:'var(--color-text)'}}>Amanhã</h1>
+        <p style={{fontSize:'16px',color:'var(--color-text-sec)'}}>
+          {DAYS_PT[dayOfWeek]}, {tomorrow.getDate()} de {MONTHS_PT[tomorrow.getMonth()]}
+        </p>
+      </div>
+
+      {/* Dica TDAH */}
+      <div style={{background:'var(--color-action-bg)',borderLeft:'4px solid var(--color-action)',borderRadius:'8px',padding:'16px',display:'flex',gap:'12px'}}>
+        <Lightbulb style={{width:'20px',height:'20px',color:'var(--color-action)',flexShrink:0,marginTop:'2px'}} />
+        <div>
+          <p style={{fontSize:'13px',fontWeight:500,color:'var(--color-action)'}}>Dica para TDAH</p>
+          <p style={{fontSize:'13px',color:'var(--color-text-sec)',marginTop:'2px'}}>
+            Planejar o dia de amanhã hoje reduz a ansiedade e facilita começar as tarefas! 💡
+          </p>
+        </div>
+      </div>
+
+      {/* Resumo do dia */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Compromissos', value: blocks.length, Icon: Calendar },
+          { label: 'Horas Ocupadas', value: formatHoras(totalBlockHours), Icon: Clock },
+          { label: 'Horas Livres', value: formatHoras(freeHours), Icon: Sparkles },
+        ].map(({ label, value, Icon }) => (
+          <div key={label} style={{background:'var(--color-surface)',border:'1px solid var(--color-border)',borderRadius:'12px',padding:'12px',textAlign:'center'}}>
+            <Icon style={{width:'20px',height:'20px',margin:'0 auto 4px',color:'var(--color-text-muted)'}} />
+            <div style={{fontSize:'18px',fontWeight:700,color:'var(--color-text)'}}>{value}</div>
+            <div style={{fontSize:'11px',color:'var(--color-text-muted)'}}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Compromissos de amanhã */}
+      <div className="space-y-3">
+        <h2 style={{fontSize:'11px',fontWeight:600,color:'var(--color-text-sec)',textTransform:'uppercase',letterSpacing:'0.08em'}}>
+          Compromissos Fixos
+        </h2>
+        {blocks.length === 0 ? (
+          <div style={{textAlign:'center',padding:'32px 24px'}}>
+            <Sparkles style={{width:'40px',height:'40px',margin:'0 auto 8px',color:'var(--color-border)'}} />
+            <p style={{fontSize:'13px',color:'var(--color-text-sec)'}}>Nenhum compromisso fixo amanhã</p>
+            <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>Dia livre para focar no que quiser!</p>
+          </div>
+        ) : (
+          blocks.map((block) => {
+            const cfg = BLOCK_COLORS[block.type] ?? BLOCK_COLORS[TimeBlockType.FIXED];
+            const duration = timeToMin(block.endTime) - timeToMin(block.startTime);
+            return (
+              <div key={block.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'12px',background:cfg.bg,borderLeft:`4px solid ${cfg.borderColor}`}}>
+                <div style={{flex:1}}>
+                  <p style={{fontWeight:500,fontSize:'13px',color:cfg.text}}>{block.title}</p>
+                  <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>
+                    {block.startTime} — {block.endTime}
+                    <span style={{marginLeft:'8px'}}>({Math.floor(duration / 60)}h{duration % 60 > 0 ? `${duration % 60}min` : ''})</span>
+                  </p>
+                </div>
+                <Clock style={{width:'16px',height:'16px',opacity:0.5,color:cfg.text}} />
               </div>
-              <h1 className="text-3xl font-bold">Amanhã</h1>
-              <p className="text-lg opacity-90">
-                {DAYS_PT[dayOfWeek]}, {tomorrow.getDate()} de {MONTHS_PT[tomorrow.getMonth()]}
-              </p>
-            </div>
+            );
+          })
+        )}
+      </div>
 
-            {/* Dica TDAH */}
-            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4 flex gap-3">
-                <Lightbulb className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
-                    Dica para TDAH
-                  </p>
-                  <p className="text-sm text-amber-700 dark:text-amber-400 mt-0.5">
-                    Planejar o dia de amanhã hoje reduz a ansiedade e facilita começar as tarefas! 💡
-                  </p>
-                </div>
-            </div>
-
-            {/* Resumo do dia */}
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: 'Compromissos', value: blocks.length, Icon: Calendar },
-                { label: 'Horas Ocupadas', value: formatHoras(totalBlockHours), Icon: Clock },
-                { label: 'Horas Livres', value: formatHoras(freeHours), Icon: Sparkles },
-              ].map(({ label, value, Icon }) => (
-                <div key={label} className="bg-base-200 rounded-xl border border-base-300 p-3 text-center">
-                    <Icon className="h-5 w-5 mx-auto mb-1 text-gray-400" />
-                    <div className="text-lg font-bold text-gray-800 dark:text-white">{value}</div>
-                    <div className="text-[11px] text-gray-400">{label}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Compromissos de amanhã */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Compromissos Fixos
-              </h2>
-              {blocks.length === 0 ? (
-                <div className="text-center py-8 space-y-2">
-                  <Sparkles className="h-10 w-10 text-gray-300 mx-auto" />
-                  <p className="text-sm text-gray-500">Nenhum compromisso fixo amanhã</p>
-                  <p className="text-xs text-gray-400">Dia livre para focar no que quiser!</p>
-                </div>
-              ) : (
-                blocks.map((block) => {
-                  const cfg = BLOCK_COLORS[block.type] ?? BLOCK_COLORS[TimeBlockType.FIXED];
-                  const duration = (timeToMin(block.endTime) - timeToMin(block.startTime));
-                  return (
-                    <div key={block.id}
-                      className={cn('flex items-center gap-3 p-3 rounded-xl border-l-4', cfg.bg, cfg.border)}>
-                      <div className="flex-1">
-                        <p className={cn('font-medium text-sm', cfg.text)}>{block.title}</p>
-                        <p className="text-xs text-gray-500">
-                          {block.startTime} — {block.endTime}
-                          <span className="ml-2 text-gray-400">({Math.floor(duration / 60)}h{duration % 60 > 0 ? `${duration % 60}min` : ''})</span>
-                        </p>
-                      </div>
-                      <Clock className={cn('h-4 w-4 opacity-50', cfg.text)} />
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Tarefas pendentes a considerar */}
-            {tasks.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Tarefas Pendentes ({tasks.length})
-                </h2>
-                <p className="text-xs text-gray-400">
-                  Considere encaixar essas tarefas nos seus horários livres de amanhã:
+      {/* Tarefas pendentes a considerar */}
+      {tasks.length > 0 && (
+        <div className="space-y-3">
+          <h2 style={{fontSize:'11px',fontWeight:600,color:'var(--color-text-sec)',textTransform:'uppercase',letterSpacing:'0.08em'}}>
+            Tarefas Pendentes ({tasks.length})
+          </h2>
+          <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>
+            Considere encaixar essas tarefas nos seus horários livres de amanhã:
+          </p>
+          <div className="space-y-2">
+            {tasks.slice(0, 5).map((task) => (
+              <div key={task.id} style={{background:'var(--color-surface)',border:'1px solid var(--color-border)',borderRadius:'12px',padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
+                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:'var(--color-focus)',flexShrink:0}} />
+                <p style={{fontSize:'13px',color:'var(--color-text)',flex:1,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                  {task.title || '(sem título)'}
                 </p>
-                <div className="space-y-2">
-                  {tasks.slice(0, 5).map((task) => (
-                    <div key={task.id} className="bg-base-200 rounded-xl border border-base-300 p-3 flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
-                        <p className="text-sm text-gray-800 dark:text-white flex-1 truncate">
-                          {task.title || '(sem título)'}
-                        </p>
-                        {task.estimatedMinutes > 0 && (
-                          <Badge variant="secondary" className="text-xs shrink-0">
-                            {task.estimatedMinutes}min
-                          </Badge>
-                        )}
-                    </div>
-                  ))}
-                  {tasks.length > 5 && (
-                    <p className="text-xs text-gray-400 text-center">+{tasks.length - 5} outras tarefas</p>
-                  )}
-                </div>
+                {task.estimatedMinutes > 0 && (
+                  <span style={{background:'var(--color-surface-2)',color:'var(--color-text-sec)',borderRadius:'999px',padding:'2px 8px',fontSize:'11px',flexShrink:0}}>
+                    {task.estimatedMinutes}min
+                  </span>
+                )}
               </div>
+            ))}
+            {tasks.length > 5 && (
+              <p style={{fontSize:'11px',color:'var(--color-text-muted)',textAlign:'center'}}>+{tasks.length - 5} outras tarefas</p>
             )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

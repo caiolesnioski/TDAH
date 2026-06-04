@@ -5,34 +5,28 @@ import {
 } from 'lucide-react';
 import { TaskCategory, TaskStatus, TaskPriority } from '@/types';
 import type { Task } from '@/types';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
-import { cn } from '@/lib/utils';
 import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/useTasks';
 
 interface CategoryConfig {
   label: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-  border: string;
-  iconColor: string;
-  dot: string;
-  badge: string;
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
+  color: string;
 }
 
 const CATEGORIES: Record<number, CategoryConfig> = {
-  [TaskCategory.STUDY]:   { label: 'Estudos',  Icon: BookOpen,       border: 'border-indigo-500/20', iconColor: 'text-indigo-400', dot: 'bg-indigo-400', badge: 'bg-indigo-500/15 text-indigo-300' },
-  [TaskCategory.WORK]:    { label: 'Trabalho', Icon: Briefcase,      border: 'border-blue-500/20',   iconColor: 'text-blue-400',   dot: 'bg-blue-400',   badge: 'bg-blue-500/15 text-blue-300' },
-  [TaskCategory.HOME]:    { label: 'Casa',     Icon: Home,           border: 'border-green-500/20',  iconColor: 'text-green-400',  dot: 'bg-green-400',  badge: 'bg-green-500/15 text-green-300' },
-  [TaskCategory.HEALTH]:  { label: 'Saúde',    Icon: Heart,          border: 'border-rose-500/20',   iconColor: 'text-rose-400',   dot: 'bg-rose-400',   badge: 'bg-rose-500/15 text-rose-300' },
-  [TaskCategory.LEISURE]: { label: 'Lazer',    Icon: Gamepad2,       border: 'border-purple-500/20', iconColor: 'text-purple-400', dot: 'bg-purple-400', badge: 'bg-purple-500/15 text-purple-300' },
-  [TaskCategory.OTHER]:   { label: 'Outros',   Icon: MoreHorizontal, border: 'border-base-300',      iconColor: 'text-base-content/50', dot: 'bg-base-content/30', badge: 'bg-base-300 text-base-content/60' },
+  [TaskCategory.STUDY]:   { label: 'Estudos',  Icon: BookOpen,       color: 'var(--color-reward)' },
+  [TaskCategory.WORK]:    { label: 'Trabalho', Icon: Briefcase,      color: 'var(--color-focus)' },
+  [TaskCategory.HOME]:    { label: 'Casa',     Icon: Home,           color: 'var(--color-done)' },
+  [TaskCategory.HEALTH]:  { label: 'Saúde',    Icon: Heart,          color: '#E8713C' },
+  [TaskCategory.LEISURE]: { label: 'Lazer',    Icon: Gamepad2,       color: 'var(--color-action)' },
+  [TaskCategory.OTHER]:   { label: 'Outros',   Icon: MoreHorizontal, color: 'var(--color-text-muted)' },
 };
 
 export default function ByCategory() {
   const { data: serverTasks = [], isLoading } = useTasks();
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [addingTo, setAddingTo] = useState<number | null>(null);
   const [newTitle, setNewTitle] = useState('');
 
@@ -88,85 +82,99 @@ export default function ByCategory() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-16">
-        <Loader2 className="h-8 w-8 animate-spin text-base-content/30" />
+      <div style={{display:'flex',justifyContent:'center',padding:'64px 0'}}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{color:'var(--color-text-muted)'}} />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-      <div className="flex items-center gap-3">
-        <h1 className="text-xl font-bold text-base-content">Por Categoria</h1>
-        <span className="text-xs bg-base-300 text-base-content/60 px-2 py-0.5 rounded-full">
+      <div style={{display:'flex',alignItems:'center',gap:'12px'}}>
+        <h1 style={{fontSize:'20px',fontWeight:700,color:'var(--color-text)'}}>Por Categoria</h1>
+        <span style={{fontSize:'11px',background:'var(--color-surface-2)',color:'var(--color-text-muted)',padding:'2px 8px',borderRadius:'999px'}}>
           {tasks.filter((t) => t.status !== TaskStatus.COMPLETED).length} pendentes
         </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {grouped.map(({ category, cfg, pending, done }) => (
-          <div key={category} className={cn('rounded-xl border bg-base-200 overflow-hidden', cfg.border)}>
+          <div key={category} style={{
+            background:'var(--color-surface)',
+            border:'1px solid var(--color-border)',
+            borderRadius:'12px',
+            overflow:'hidden',
+            borderLeft:`4px solid ${cfg.color}`,
+          }}>
             {/* Card header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
-              <div className="flex items-center gap-2">
-                <div className={cn('w-2 h-2 rounded-full flex-shrink-0', cfg.dot)} />
-                <cfg.Icon size={14} className={cfg.iconColor} />
-                <span className="text-sm font-semibold text-base-content">{cfg.label}</span>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--color-border)'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                <div style={{width:'8px',height:'8px',borderRadius:'50%',background:cfg.color,flexShrink:0}} />
+                <cfg.Icon size={14} style={{color:cfg.color}} />
+                <span style={{fontSize:'13px',fontWeight:600,color:'var(--color-text)'}}>{cfg.label}</span>
               </div>
-              <span className="text-xs text-base-content/40 bg-base-300 px-2 py-0.5 rounded-full">
+              <span style={{fontSize:'11px',color:'var(--color-text-muted)',background:'var(--color-surface-2)',borderRadius:'999px',padding:'2px 8px'}}>
                 {pending.length}
               </span>
             </div>
 
             {/* Tasks */}
-            <div className="p-3 space-y-1.5 max-h-80 overflow-y-auto">
+            <div style={{padding:'12px',maxHeight:'320px',overflowY:'auto',display:'flex',flexDirection:'column',gap:'6px'}}>
               {pending.length === 0 && done.length === 0 && (
-                <p className="text-xs text-base-content/30 text-center py-4">Nenhuma tarefa ainda</p>
+                <p style={{fontSize:'11px',color:'var(--color-text-muted)',textAlign:'center',padding:'16px 0'}}>Nenhuma tarefa ainda</p>
               )}
 
               {pending.map((task) => (
                 <div key={task.id}
-                  className={cn(
-                    'flex items-center gap-2 p-2 rounded-lg bg-base-300/40 group hover:bg-base-300 transition-colors',
-                    task.priority === TaskPriority.HIGH   && 'border-l-2 border-l-red-500',
-                    task.priority === TaskPriority.MEDIUM && 'border-l-2 border-l-amber-400',
-                  )}>
-                  <button onClick={() => handleToggle(task.id, true)} className="shrink-0">
-                    <Circle className="h-4 w-4 text-base-content/30 hover:text-primary transition-colors" />
+                  style={{
+                    display:'flex',alignItems:'center',gap:'8px',padding:'8px',borderRadius:'8px',
+                    background:'var(--color-surface-2)',
+                    borderLeft: task.priority === TaskPriority.HIGH   ? '2px solid var(--color-alert)'
+                              : task.priority === TaskPriority.MEDIUM ? '2px solid var(--color-action)'
+                              : 'none',
+                  }}
+                  className="group"
+                >
+                  <button onClick={() => handleToggle(task.id, true)} style={{flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0}}>
+                    <Circle style={{width:'16px',height:'16px',color:'var(--color-border)'}} />
                   </button>
-                  <span className={cn(
-                    'flex-1 text-sm text-base-content truncate',
-                    task.priority === TaskPriority.HIGH && 'text-red-300',
-                  )}>
+                  <span style={{
+                    flex:1,fontSize:'13px',
+                    color: task.priority === TaskPriority.HIGH ? 'var(--color-alert)' : 'var(--color-text)',
+                    overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                  }}>
                     {task.title || '(sem título)'}
                   </span>
-                  <button onClick={() => setTaskToDelete(task.id)}
-                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Trash2 className="h-3.5 w-3.5 text-error/60 hover:text-error" />
+                  <button
+                    onClick={() => { if (window.confirm('Excluir esta tarefa?')) handleDelete(task.id); }}
+                    style={{flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0,opacity:0,color:'var(--color-alert)',transition:'opacity 0.15s'}}
+                    className="group-hover:opacity-100"
+                  >
+                    <Trash2 style={{width:'14px',height:'14px'}} />
                   </button>
                 </div>
               ))}
 
               {done.length > 0 && (
-                <div className="pt-1 border-t border-base-300 space-y-1">
+                <div style={{paddingTop:'4px',borderTop:'1px solid var(--color-border)',display:'flex',flexDirection:'column',gap:'4px'}}>
                   {done.slice(0, 3).map((task) => (
-                    <div key={task.id} className="flex items-center gap-2 p-1.5 opacity-40">
-                      <button onClick={() => handleToggle(task.id, false)} className="shrink-0">
-                        <CheckCircle2 className="h-4 w-4 text-success" />
+                    <div key={task.id} style={{display:'flex',alignItems:'center',gap:'8px',padding:'6px',opacity:0.4}}>
+                      <button onClick={() => handleToggle(task.id, false)} style={{flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0}}>
+                        <CheckCircle2 style={{width:'16px',height:'16px',color:'var(--color-done)'}} />
                       </button>
-                      <span className="flex-1 text-xs text-base-content truncate line-through">
+                      <span style={{flex:1,fontSize:'11px',color:'var(--color-text)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textDecoration:'line-through'}}>
                         {task.title || '(sem título)'}
                       </span>
                     </div>
                   ))}
                   {done.length > 3 && (
-                    <p className="text-[10px] text-base-content/30 text-center">+{done.length - 3} concluídas</p>
+                    <p style={{fontSize:'10px',color:'var(--color-text-muted)',textAlign:'center'}}>+{done.length - 3} concluídas</p>
                   )}
                 </div>
               )}
 
               {addingTo === category ? (
-                <div className="flex gap-1 pt-1">
+                <div style={{display:'flex',gap:'4px',paddingTop:'4px'}}>
                   <input
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -175,31 +183,26 @@ export default function ByCategory() {
                       if (e.key === 'Escape') { setAddingTo(null); setNewTitle(''); }
                     }}
                     placeholder="Nome da tarefa..."
-                    className="flex-1 h-7 text-xs bg-base-300 rounded px-2 focus:outline-none text-base-content"
+                    style={{flex:1,height:'28px',fontSize:'12px',background:'var(--color-bg)',border:'1px solid var(--color-border)',borderRadius:'6px',padding:'0 8px',color:'var(--color-text)',outline:'none'}}
                     autoFocus
                   />
-                  <button className="btn btn-primary btn-xs h-7" onClick={() => handleAdd(category)}>OK</button>
+                  <button
+                    style={{background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'6px',padding:'4px 10px',fontSize:'12px',fontWeight:500,cursor:'pointer'}}
+                    onClick={() => handleAdd(category)}
+                  >OK</button>
                 </div>
               ) : (
                 <button
-                  className="flex items-center gap-1.5 w-full px-2 py-1.5 text-xs text-base-content/40 hover:text-base-content transition-colors rounded-lg hover:bg-base-300"
-                  onClick={() => { setAddingTo(category); setNewTitle(''); }}>
-                  <Plus className="h-3.5 w-3.5" /> Nova tarefa
+                  style={{display:'flex',alignItems:'center',gap:'6px',width:'100%',padding:'6px 8px',fontSize:'11px',color:'var(--color-text-muted)',background:'transparent',border:'none',borderRadius:'8px',cursor:'pointer'}}
+                  onClick={() => { setAddingTo(category); setNewTitle(''); }}
+                >
+                  <Plus style={{width:'14px',height:'14px'}} /> Nova tarefa
                 </button>
               )}
             </div>
           </div>
         ))}
       </div>
-
-      <ConfirmDialog
-        open={!!taskToDelete}
-        title="Excluir tarefa"
-        message="Tem certeza que deseja excluir essa tarefa?"
-        confirmLabel="Excluir"
-        onConfirm={() => { if (taskToDelete) handleDelete(taskToDelete); setTaskToDelete(null); }}
-        onCancel={() => setTaskToDelete(null)}
-      />
     </div>
   );
 }

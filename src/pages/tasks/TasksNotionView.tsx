@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   CalendarDays, ListTodo, BookOpen, Briefcase, Home, Heart, Gamepad2,
-  MoreHorizontal, Plus, ChevronRight, ChevronDown, Flag, Clock, Trash2, Play, X, Brain, Tag,
+  MoreHorizontal, Plus, ChevronRight, ChevronDown, Flag, Clock, Trash2, Play, X, Brain, Tag, Loader2,
 } from 'lucide-react';
 import { TaskCategory, TaskPriority, TaskStatus } from '@/types';
 import type { Task } from '@/types';
@@ -27,16 +27,17 @@ type TimeGroup = 'morning' | 'afternoon' | 'night' | 'notime';
 
 const CATEGORY_META: Record<TaskCategory, {
   label: string;
-  Icon: React.ComponentType<{ size?: number; className?: string }>;
-  color: string;
-  bg: string;
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties; className?: string }>;
+  iconColor: string;
+  badgeBg: string;
+  badgeText: string;
 }> = {
-  [TaskCategory.STUDY]:   { label: 'Estudos',  Icon: BookOpen,       color: 'text-indigo-400', bg: 'bg-indigo-500/15 text-indigo-300' },
-  [TaskCategory.WORK]:    { label: 'Trabalho', Icon: Briefcase,      color: 'text-blue-400',   bg: 'bg-blue-500/15 text-blue-300' },
-  [TaskCategory.HOME]:    { label: 'Casa',     Icon: Home,           color: 'text-green-400',  bg: 'bg-green-500/15 text-green-300' },
-  [TaskCategory.HEALTH]:  { label: 'Saúde',    Icon: Heart,          color: 'text-rose-400',   bg: 'bg-rose-500/15 text-rose-300' },
-  [TaskCategory.LEISURE]: { label: 'Lazer',    Icon: Gamepad2,       color: 'text-purple-400', bg: 'bg-purple-500/15 text-purple-300' },
-  [TaskCategory.OTHER]:   { label: 'Outros',   Icon: MoreHorizontal, color: 'text-gray-400',   bg: 'bg-gray-500/15 text-gray-300' },
+  [TaskCategory.STUDY]:   { label: 'Estudos',  Icon: BookOpen,       iconColor: 'var(--color-reward)', badgeBg: 'var(--color-reward-bg)', badgeText: 'var(--color-reward)' },
+  [TaskCategory.WORK]:    { label: 'Trabalho', Icon: Briefcase,      iconColor: 'var(--color-focus)',  badgeBg: 'var(--color-focus-bg)',  badgeText: 'var(--color-focus)' },
+  [TaskCategory.HOME]:    { label: 'Casa',     Icon: Home,           iconColor: 'var(--color-done)',   badgeBg: 'var(--color-done-bg)',   badgeText: 'var(--color-done)' },
+  [TaskCategory.HEALTH]:  { label: 'Saúde',    Icon: Heart,          iconColor: 'var(--color-alert)',  badgeBg: 'var(--color-alert-bg)', badgeText: 'var(--color-alert)' },
+  [TaskCategory.LEISURE]: { label: 'Lazer',    Icon: Gamepad2,       iconColor: 'var(--color-action)', badgeBg: 'var(--color-action-bg)', badgeText: 'var(--color-action)' },
+  [TaskCategory.OTHER]:   { label: 'Outros',   Icon: MoreHorizontal, iconColor: 'var(--color-text-muted)', badgeBg: 'var(--color-surface-2)', badgeText: 'var(--color-text-muted)' },
 };
 
 const CATEGORY_KEYS = [
@@ -83,14 +84,16 @@ function FilterButton({ active, onClick, icon, label, count }: {
   return (
     <button
       onClick={onClick}
-      className={cn(
-        'flex items-center gap-2 w-full px-2 py-1.5 rounded-lg text-sm transition-colors',
-        active ? 'bg-primary/15 text-primary' : 'text-base-content hover:bg-base-300',
-      )}
+      style={{
+        display:'flex',alignItems:'center',gap:'8px',width:'100%',padding:'6px 8px',
+        borderRadius:'8px',fontSize:'13px',border:'none',cursor:'pointer',
+        background: active ? 'var(--color-action-bg)' : 'transparent',
+        color: active ? 'var(--color-action)' : 'var(--color-text-sec)',
+      }}
     >
       {icon}
-      <span className="flex-1 text-left whitespace-nowrap">{label}</span>
-      <span className="text-xs text-base-content/40">{count}</span>
+      <span style={{flex:1,textAlign:'left',whiteSpace:'nowrap'}}>{label}</span>
+      <span style={{fontSize:'11px',color:'var(--color-text-muted)'}}>{count}</span>
     </button>
   );
 }
@@ -106,20 +109,25 @@ function TaskRow({ task, onToggle, onSelect }: {
   const { start } = useFloatingTimerStore();
   const isStudy = task.category === TaskCategory.STUDY;
 
-  const priorityBorder = !isCompleted ? {
-    [TaskPriority.HIGH]:   'border-l-2 border-l-red-500 bg-red-500/5 hover:bg-red-500/10',
-    [TaskPriority.MEDIUM]: 'border-l-2 border-l-amber-400 bg-amber-400/5 hover:bg-amber-400/10',
-    [TaskPriority.LOW]:    'hover:bg-base-300/50',
-  }[task.priority] : 'hover:bg-base-300/50';
+  const rowStyle: React.CSSProperties = !isCompleted
+    ? task.priority === TaskPriority.HIGH
+      ? { borderLeft: '2px solid var(--color-alert)', background: 'var(--color-alert-bg)' }
+      : task.priority === TaskPriority.MEDIUM
+      ? { borderLeft: '2px solid var(--color-action)', background: 'var(--color-action-bg)' }
+      : {}
+    : {};
 
   return (
-    <div className={cn('flex items-center gap-3 px-4 py-2.5 rounded-lg group transition-colors', priorityBorder)}>
+    <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg group transition-colors" style={rowStyle}>
       <button
         onClick={() => onToggle(task)}
-        className={cn(
-          'w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center',
-          isCompleted ? 'bg-success/60 border-success/60' : 'border-base-content/30 hover:border-primary',
-        )}
+        className="w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center"
+        style={{
+          borderColor: isCompleted ? 'var(--color-done)' : 'var(--color-border)',
+          background: isCompleted ? 'var(--color-done)' : 'transparent',
+          cursor: 'pointer',
+          padding: 0,
+        }}
         aria-label={isCompleted ? 'Desmarcar' : 'Concluir'}
       >
         {isCompleted && (
@@ -129,32 +137,44 @@ function TaskRow({ task, onToggle, onSelect }: {
         )}
       </button>
 
-      <span className={cn(
-        'flex-1 text-sm min-w-0 truncate',
-        isCompleted ? 'line-through text-base-content/40' : 'text-base-content font-medium',
-        task.priority === TaskPriority.HIGH && !isCompleted && 'text-red-300',
-      )}>
+      <span
+        className={cn('flex-1 text-sm min-w-0 truncate', isCompleted && 'line-through')}
+        style={{
+          color: isCompleted ? 'var(--color-text-muted)'
+               : task.priority === TaskPriority.HIGH ? 'var(--color-alert)'
+               : 'var(--color-text)',
+          fontWeight: isCompleted ? 400 : 500,
+        }}
+      >
         {task.title}
       </span>
 
-      <span className={cn('text-xs px-2 py-0.5 rounded-full hidden sm:inline-flex items-center gap-1 flex-shrink-0', cat.bg)}>
+      <span
+        className="hidden sm:inline-flex items-center gap-1 flex-shrink-0 text-xs"
+        style={{padding:'2px 8px',borderRadius:'999px',background:cat.badgeBg,color:cat.badgeText}}
+      >
         <cat.Icon size={10} />
         {cat.label}
       </span>
 
-      {time && <span className="text-xs text-base-content/50 tabular-nums flex-shrink-0">{time}</span>}
+      {time && (
+        <span style={{fontSize:'11px',color:'var(--color-text-muted)',fontVariantNumeric:'tabular-nums',flexShrink:0}}>
+          {time}
+        </span>
+      )}
 
       {task.priority === TaskPriority.HIGH && (
-        <Flag size={12} className="text-red-400 flex-shrink-0" />
+        <Flag size={12} style={{color:'var(--color-alert)',flexShrink:0}} />
       )}
       {task.priority === TaskPriority.MEDIUM && (
-        <Flag size={12} className="text-amber-400 flex-shrink-0" />
+        <Flag size={12} style={{color:'var(--color-action)',flexShrink:0}} />
       )}
 
       {!isCompleted && (
         <button
           onClick={() => start(task, isStudy ? 25 : 30, isStudy)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-primary/60 hover:text-primary flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          style={{background:'none',border:'none',cursor:'pointer',padding:0,color:'var(--color-action)'}}
           title={isStudy ? 'Iniciar Pomodoro' : 'Iniciar timer'}
           aria-label="Iniciar timer"
         >
@@ -164,7 +184,8 @@ function TaskRow({ task, onToggle, onSelect }: {
 
       <button
         onClick={() => onSelect(task)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-base-content/40 hover:text-base-content flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        style={{background:'none',border:'none',cursor:'pointer',padding:0,color:'var(--color-text-muted)'}}
         aria-label="Detalhes"
       >
         <ChevronRight size={15} />
@@ -222,38 +243,46 @@ function DetailPanel({ task, onClose }: { task: Task; onClose: () => void }) {
   const isStudy = Number(category) === TaskCategory.STUDY;
   const duration = Number(estimatedMinutes) > 0 ? Number(estimatedMinutes) : (isStudy ? 25 : 30);
 
+  const fieldStyle: React.CSSProperties = { display:'flex',alignItems:'center',gap:'12px' };
+  const iconStyle: React.CSSProperties  = { color:'var(--color-text-muted)',flexShrink:0 };
+
   return (
     <div className="fixed inset-0 z-40" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <aside className="absolute right-0 top-0 h-full w-72 bg-base-200 border-l border-base-300 flex flex-col shadow-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-base-300 flex-shrink-0">
-          <span className="text-sm font-semibold text-base-content">Detalhes</span>
-          <button onClick={onClose} className="btn btn-ghost btn-xs btn-circle"><X size={14} /></button>
+      <aside style={{position:'absolute',right:0,top:0,height:'100%',width:'288px',background:'var(--color-surface)',borderLeft:'1px solid var(--color-border)',display:'flex',flexDirection:'column',boxShadow:'0 24px 48px rgba(0,0,0,0.12)'}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 16px',borderBottom:'1px solid var(--color-border)',flexShrink:0}}>
+          <span style={{fontSize:'13px',fontWeight:600,color:'var(--color-text)'}}>Detalhes</span>
+          <button onClick={onClose} style={{background:'none',border:'none',cursor:'pointer',padding:'4px',borderRadius:'50%',display:'flex',color:'var(--color-text-muted)'}}>
+            <X size={14} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           <input
-            className="w-full text-sm font-semibold bg-transparent border-b border-base-300 pb-2 focus:outline-none focus:border-primary text-base-content"
+            style={{width:'100%',fontSize:'13px',fontWeight:600,background:'transparent',borderBottom:'1px solid var(--color-border)',paddingBottom:'8px',outline:'none',color:'var(--color-text)'}}
             value={title}
             onChange={(e) => { setTitle(e.target.value); save({ title: e.target.value }); }}
           />
 
-          <div className="flex items-center gap-3">
-            <CalendarDays size={14} className="text-base-content/50 flex-shrink-0" />
-            <input type="date" className="flex-1 text-sm bg-transparent text-base-content focus:outline-none"
+          <div style={fieldStyle}>
+            <CalendarDays size={14} style={iconStyle} />
+            <input type="date"
+              style={{flex:1,fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
               value={date}
               onChange={(e) => { setDate(e.target.value); save({ dueDate: buildDeadline(e.target.value, time) }); }} />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Clock size={14} className="text-base-content/50 flex-shrink-0" />
-            <input type="time" className="flex-1 text-sm bg-transparent text-base-content focus:outline-none"
+          <div style={fieldStyle}>
+            <Clock size={14} style={iconStyle} />
+            <input type="time"
+              style={{flex:1,fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
               value={time}
               onChange={(e) => { setTime(e.target.value); save({ dueDate: buildDeadline(date, e.target.value) }); }} />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Tag size={14} className="text-base-content/50 flex-shrink-0" />
-            <select className="flex-1 text-sm bg-base-200 text-base-content focus:outline-none rounded"
+          <div style={fieldStyle}>
+            <Tag size={14} style={iconStyle} />
+            <select
+              style={{flex:1,fontSize:'13px',background:'var(--color-surface-2)',color:'var(--color-text)',outline:'none',borderRadius:'6px',border:'none',padding:'2px 4px'}}
               value={category}
               onChange={(e) => { setCategory(e.target.value); save({ category: Number(e.target.value) as TaskCategory }); }}>
               {CATEGORY_KEYS.map((k) => (
@@ -262,9 +291,10 @@ function DetailPanel({ task, onClose }: { task: Task; onClose: () => void }) {
             </select>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Flag size={14} className="text-base-content/50 flex-shrink-0" />
-            <select className="flex-1 text-sm bg-base-200 text-base-content focus:outline-none rounded"
+          <div style={fieldStyle}>
+            <Flag size={14} style={iconStyle} />
+            <select
+              style={{flex:1,fontSize:'13px',background:'var(--color-surface-2)',color:'var(--color-text)',outline:'none',borderRadius:'6px',border:'none',padding:'2px 4px'}}
               value={priority}
               onChange={(e) => { setPriority(e.target.value); save({ priority: Number(e.target.value) as TaskPriority }); }}>
               <option value={TaskPriority.HIGH}>Alta</option>
@@ -273,32 +303,37 @@ function DetailPanel({ task, onClose }: { task: Task; onClose: () => void }) {
             </select>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Clock size={14} className="text-base-content/50 flex-shrink-0" />
-            <input type="number" min={1} className="w-16 text-sm bg-transparent text-base-content focus:outline-none"
+          <div style={fieldStyle}>
+            <Clock size={14} style={iconStyle} />
+            <input type="number" min={1}
+              style={{width:'64px',fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
               value={estimatedMinutes}
               onChange={(e) => {
                 setEstimatedMinutes(e.target.value);
                 const n = Number(e.target.value);
                 if (n > 0) save({ estimatedMinutes: n });
               }} />
-            <span className="text-xs text-base-content/40">min</span>
+            <span style={{fontSize:'11px',color:'var(--color-text-muted)'}}>min</span>
           </div>
 
-          <textarea className="w-full text-sm bg-base-300/50 rounded-lg p-3 focus:outline-none focus:ring-1 focus:ring-primary text-base-content resize-none"
+          <textarea
+            style={{width:'100%',fontSize:'13px',background:'var(--color-surface-2)',borderRadius:'8px',padding:'12px',outline:'none',color:'var(--color-text)',resize:'none',border:'none'}}
             rows={4} placeholder="Notas..."
             value={description}
             onChange={(e) => { setDescription(e.target.value); save({ description: e.target.value }); }} />
         </div>
 
-        <div className="p-4 border-t border-base-300 space-y-2 flex-shrink-0">
+        <div style={{padding:'16px',borderTop:'1px solid var(--color-border)',display:'flex',flexDirection:'column',gap:'8px',flexShrink:0}}>
           <button
-            className="btn btn-primary btn-sm w-full gap-2"
+            style={{background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'8px',padding:'8px 16px',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',fontWeight:500,fontSize:'13px',cursor:'pointer'}}
             onClick={() => { start(task, duration, isStudy); onClose(); }}
           >
             {isStudy ? <><Brain size={14} /> Iniciar Pomodoro</> : <><Play size={14} /> Iniciar timer</>}
           </button>
-          <button className="btn btn-ghost btn-sm w-full text-error gap-2" onClick={handleDelete}>
+          <button
+            style={{background:'transparent',color:'var(--color-alert)',border:'1px solid var(--color-alert)',borderRadius:'8px',padding:'8px 16px',width:'100%',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',fontSize:'13px',cursor:'pointer'}}
+            onClick={handleDelete}
+          >
             <Trash2 size={14} /> Excluir tarefa
           </button>
         </div>
@@ -321,7 +356,6 @@ export default function TasksNotionView() {
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [showCompleted,   setShowCompleted]   = useState(false);
 
-  // form state
   const [newTitle,    setNewTitle]    = useState('');
   const [newDate,     setNewDate]     = useState('');
   const [newTime,     setNewTime]     = useState('');
@@ -333,7 +367,6 @@ export default function TasksNotionView() {
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
-  // custom lists (local — use provided SQL migration for persistence)
   const [customLists,      setCustomLists]      = useState<{ id: string; name: string }[]>([]);
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName,      setNewListName]      = useState('');
@@ -446,10 +479,21 @@ export default function TasksNotionView() {
       ? (customLists.find((l) => l.id === activeFilter)?.name ?? 'Lista')
       : (CATEGORY_META[activeFilter as TaskCategory]?.label ?? 'Tarefas');
 
+  const pickerPopupStyle: React.CSSProperties = {
+    position:'absolute',top:'32px',right:0,zIndex:50,
+    background:'var(--color-surface)',border:'1px solid var(--color-border)',
+    borderRadius:'8px',padding:'8px',boxShadow:'0 8px 24px rgba(0,0,0,0.12)',
+  };
+
+  const ghostBtnStyle: React.CSSProperties = {
+    background:'transparent',border:'none',cursor:'pointer',padding:'4px',
+    borderRadius:'6px',display:'flex',alignItems:'center',color:'var(--color-text-muted)',
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <span className="loading loading-spinner loading-md text-primary" />
+      <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'256px'}}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{color:'var(--color-action)'}} />
       </div>
     );
   }
@@ -458,37 +502,37 @@ export default function TasksNotionView() {
     <>
       <div className="flex h-full min-h-0 overflow-hidden">
         {/* ── SIDEBAR ─────────────────────────────────────────────────────────── */}
-        <aside className="w-44 shrink-0 bg-base-200 border-r border-base-300 p-3 flex flex-col overflow-y-auto">
+        <aside style={{width:'176px',flexShrink:0,background:'var(--color-surface-2)',borderRight:'1px solid var(--color-border)',padding:'12px',display:'flex',flexDirection:'column',overflowY:'auto'}}>
           <div className="space-y-0.5">
             <FilterButton active={activeFilter === 'today'} onClick={() => setActiveFilter('today')}
-              icon={<CalendarDays size={14} className="text-blue-400" />} label="Hoje" count={todayCount} />
+              icon={<CalendarDays size={14} style={{color:'var(--color-focus)'}} />} label="Hoje" count={todayCount} />
             <FilterButton active={activeFilter === 'all'} onClick={() => setActiveFilter('all')}
-              icon={<ListTodo size={14} className="text-base-content/60" />} label="Todos" count={allCount} />
+              icon={<ListTodo size={14} style={{color:'var(--color-text-muted)'}} />} label="Todos" count={allCount} />
           </div>
 
-          <p className="text-[10px] font-semibold text-base-content/40 tracking-widest px-2 mt-4 mb-1 uppercase">
+          <p style={{fontSize:'10px',fontWeight:600,color:'var(--color-text-muted)',letterSpacing:'0.1em',padding:'0 8px',marginTop:'16px',marginBottom:'4px',textTransform:'uppercase'}}>
             Minhas listas
           </p>
           <div className="space-y-0.5">
             {CATEGORY_KEYS.map((k) => {
-              const { label, Icon, color } = CATEGORY_META[k];
+              const { label, Icon, iconColor } = CATEGORY_META[k];
               return (
                 <FilterButton key={k} active={activeFilter === k} onClick={() => setActiveFilter(k)}
-                  icon={<Icon size={14} className={color} />} label={label} count={categoryCounts[k] ?? 0} />
+                  icon={<Icon size={14} style={{color:iconColor}} />} label={label} count={categoryCounts[k] ?? 0} />
               );
             })}
           </div>
 
           {customLists.length > 0 && (
             <>
-              <p className="text-[10px] font-semibold text-base-content/40 tracking-widest px-2 mt-4 mb-1 uppercase">
+              <p style={{fontSize:'10px',fontWeight:600,color:'var(--color-text-muted)',letterSpacing:'0.1em',padding:'0 8px',marginTop:'16px',marginBottom:'4px',textTransform:'uppercase'}}>
                 Listas
               </p>
               <div className="space-y-0.5">
                 {customLists.map((list) => (
                   <FilterButton key={list.id} active={activeFilter === list.id}
                     onClick={() => setActiveFilter(list.id)}
-                    icon={<Tag size={14} className="text-base-content/50" />} label={list.name} count={allCount} />
+                    icon={<Tag size={14} style={{color:'var(--color-text-muted)'}} />} label={list.name} count={allCount} />
                 ))}
               </div>
             </>
@@ -496,9 +540,9 @@ export default function TasksNotionView() {
 
           <div className="mt-auto pt-4">
             {showNewListInput ? (
-              <div className="flex items-center gap-1">
+              <div style={{display:'flex',alignItems:'center',gap:'4px'}}>
                 <input
-                  className="flex-1 text-xs bg-base-300 rounded px-2 py-1 focus:outline-none text-base-content"
+                  style={{flex:1,fontSize:'11px',background:'var(--color-surface)',borderRadius:'6px',padding:'4px 8px',border:'1px solid var(--color-border)',outline:'none',color:'var(--color-text)'}}
                   placeholder="Nome da lista..."
                   value={newListName} autoFocus
                   onChange={(e) => setNewListName(e.target.value)}
@@ -507,11 +551,14 @@ export default function TasksNotionView() {
                     if (e.key === 'Escape') { setShowNewListInput(false); setNewListName(''); }
                   }}
                 />
-                <button onClick={handleAddList} className="btn btn-primary btn-xs">✓</button>
+                <button onClick={handleAddList}
+                  style={{background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'6px',padding:'4px 8px',fontSize:'11px',fontWeight:500,cursor:'pointer'}}>
+                  ✓
+                </button>
               </div>
             ) : (
               <button
-                className="flex items-center gap-2 w-full px-2 py-2 text-sm text-base-content/50 hover:text-base-content transition-colors"
+                style={{display:'flex',alignItems:'center',gap:'8px',width:'100%',padding:'8px',fontSize:'13px',color:'var(--color-text-muted)',background:'none',border:'none',cursor:'pointer'}}
                 onClick={() => setShowNewListInput(true)}
               >
                 <Plus size={15} /> Nova lista
@@ -522,12 +569,15 @@ export default function TasksNotionView() {
 
         {/* ── MAIN ────────────────────────────────────────────────────────────── */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex items-start justify-between px-6 pt-6 pb-4 flex-shrink-0">
+          <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',padding:'24px 24px 16px',flexShrink:0}}>
             <div>
-              <h1 className="text-xl font-bold text-base-content">{viewTitle}</h1>
-              <p className="text-sm text-base-content/50 capitalize mt-0.5">{formatDisplayDate()}</p>
+              <h1 style={{fontSize:'20px',fontWeight:700,color:'var(--color-text)'}}>{viewTitle}</h1>
+              <p style={{fontSize:'13px',color:'var(--color-text-muted)',textTransform:'capitalize',marginTop:'2px'}}>{formatDisplayDate()}</p>
             </div>
-            <button onClick={() => setShowNewTaskForm(true)} className="btn btn-primary btn-sm gap-1.5">
+            <button
+              onClick={() => setShowNewTaskForm(true)}
+              style={{background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'8px',padding:'7px 14px',fontWeight:500,fontSize:'13px',cursor:'pointer',display:'flex',alignItems:'center',gap:'6px'}}
+            >
               <Plus size={14} /> Nova Tarefa
             </button>
           </div>
@@ -535,26 +585,28 @@ export default function TasksNotionView() {
           <div className="flex-1 overflow-y-auto px-4 pb-8">
             {/* Inline new-task form */}
             {showNewTaskForm && (
-              <div className="mb-4 bg-base-300/30 rounded-xl border border-base-300">
+              <div style={{marginBottom:'16px',background:'var(--color-surface-2)',borderRadius:'12px',border:'1px solid var(--color-border)'}}>
                 {/* Input row */}
-                <div className="flex items-center gap-2 px-4 py-2.5">
+                <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'10px 16px'}}>
                   <button
                     onClick={() => handleSaveNew(true)}
                     title="Salvar como concluída"
-                    className={cn(
-                      'w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center group/circle',
-                      newTitle.trim()
-                        ? 'border-base-content/40 hover:border-success hover:bg-success/20 cursor-pointer'
-                        : 'border-base-content/15 cursor-default',
-                    )}
+                    style={{
+                      width:'16px',height:'16px',borderRadius:'50%',flexShrink:0,
+                      border:`2px solid ${newTitle.trim() ? 'var(--color-border)' : 'rgba(0,0,0,0.1)'}`,
+                      display:'flex',alignItems:'center',justifyContent:'center',
+                      background:'transparent',cursor: newTitle.trim() ? 'pointer' : 'default',padding:0,
+                    }}
+                    className="group/circle"
                   >
-                    <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 opacity-0 group-hover/circle:opacity-60 transition-opacity" fill="none">
-                      <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-success" />
+                    <svg viewBox="0 0 10 10" style={{width:'10px',height:'10px',opacity:0}} className="group-hover/circle:opacity-60 transition-opacity" fill="none">
+                      <path d="M2 5L4 7L8 3" stroke="var(--color-done)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </button>
+
                   <input
                     ref={newTitleRef}
-                    className="flex-1 text-sm bg-transparent focus:outline-none text-base-content placeholder:text-base-content/40 min-w-0"
+                    style={{flex:1,fontSize:'13px',background:'transparent',outline:'none',color:'var(--color-text)',minWidth:0}}
                     placeholder="Título da tarefa..."
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
@@ -566,13 +618,13 @@ export default function TasksNotionView() {
 
                   {/* Date */}
                   <div className="relative flex-shrink-0">
-                    <button onClick={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}
-                      className={cn('btn btn-ghost btn-xs', newDate && 'text-primary')}>
+                    <button style={{...ghostBtnStyle,color:newDate?'var(--color-action)':'var(--color-text-muted)'}}
+                      onClick={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
                       <CalendarDays size={13} />
                     </button>
                     {showDatePicker && (
-                      <div className="absolute top-8 right-0 z-50 bg-base-100 border border-base-300 rounded-lg p-2 shadow-xl">
-                        <input type="date" className="text-sm bg-transparent text-base-content focus:outline-none"
+                      <div style={pickerPopupStyle}>
+                        <input type="date" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
                           value={newDate} onChange={(e) => { setNewDate(e.target.value); setShowDatePicker(false); }} />
                       </div>
                     )}
@@ -580,13 +632,13 @@ export default function TasksNotionView() {
 
                   {/* Time */}
                   <div className="relative flex-shrink-0">
-                    <button onClick={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}
-                      className={cn('btn btn-ghost btn-xs', newTime && 'text-primary')}>
+                    <button style={{...ghostBtnStyle,color:newTime?'var(--color-action)':'var(--color-text-muted)'}}
+                      onClick={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
                       <Clock size={13} />
                     </button>
                     {showTimePicker && (
-                      <div className="absolute top-8 right-0 z-50 bg-base-100 border border-base-300 rounded-lg p-2 shadow-xl">
-                        <input type="time" className="text-sm bg-transparent text-base-content focus:outline-none"
+                      <div style={pickerPopupStyle}>
+                        <input type="time" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
                           value={newTime} onChange={(e) => { setNewTime(e.target.value); setShowTimePicker(false); }} />
                       </div>
                     )}
@@ -594,22 +646,22 @@ export default function TasksNotionView() {
 
                   {/* Category */}
                   <div className="relative flex-shrink-0">
-                    <button onClick={() => { setShowCategoryPicker(!showCategoryPicker); setShowDatePicker(false); setShowTimePicker(false); setShowPriorityPicker(false); }}
-                      className="btn btn-ghost btn-xs">
-                      {(() => { const { Icon, color } = CATEGORY_META[newCategory]; return <Icon size={13} className={color} />; })()}
+                    <button style={ghostBtnStyle}
+                      onClick={() => { setShowCategoryPicker(!showCategoryPicker); setShowDatePicker(false); setShowTimePicker(false); setShowPriorityPicker(false); }}>
+                      {(() => { const { Icon, iconColor } = CATEGORY_META[newCategory]; return <Icon size={13} style={{color:iconColor}} />; })()}
                     </button>
                     {showCategoryPicker && (
-                      <div className="absolute top-8 right-0 z-50 bg-base-100 border border-base-300 rounded-xl p-2 shadow-xl grid grid-cols-3 gap-1 min-w-[176px]">
+                      <div style={{...pickerPopupStyle,display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:'4px',minWidth:'176px'}}>
                         {CATEGORY_KEYS.map((k) => {
-                          const { label, Icon, color } = CATEGORY_META[k];
+                          const { label, Icon, iconColor } = CATEGORY_META[k];
                           return (
                             <button key={k}
-                              className={cn('flex flex-col items-center gap-1 p-2 rounded-lg text-xs hover:bg-base-200 transition-colors', newCategory === k && 'bg-primary/15 text-primary')}
+                              style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'4px',padding:'8px',borderRadius:'8px',fontSize:'11px',cursor:'pointer',border:'none',background:newCategory===k?'var(--color-action-bg)':'transparent',color:newCategory===k?'var(--color-action)':'var(--color-text-sec)'}}
                               onClick={() => {
                                 setNewCategory(k); setShowCategoryPicker(false);
                                 if (k === TaskCategory.STUDY) setNewDuration(25);
                               }}>
-                              <Icon size={14} className={color} />{label}
+                              <Icon size={14} style={{color:iconColor}} />{label}
                             </button>
                           );
                         })}
@@ -619,17 +671,16 @@ export default function TasksNotionView() {
 
                   {/* Priority */}
                   <div className="relative flex-shrink-0">
-                    <button onClick={() => { setShowPriorityPicker(!showPriorityPicker); setShowDatePicker(false); setShowTimePicker(false); setShowCategoryPicker(false); }}
-                      className={cn('btn btn-ghost btn-xs',
-                        newPriority === TaskPriority.HIGH && 'text-red-400',
-                        newPriority === TaskPriority.MEDIUM && 'text-amber-400',
-                      )}>
+                    <button
+                      style={{...ghostBtnStyle,color:newPriority===TaskPriority.HIGH?'var(--color-alert)':newPriority===TaskPriority.MEDIUM?'var(--color-action)':'var(--color-text-muted)'}}
+                      onClick={() => { setShowPriorityPicker(!showPriorityPicker); setShowDatePicker(false); setShowTimePicker(false); setShowCategoryPicker(false); }}>
                       <Flag size={13} />
                     </button>
                     {showPriorityPicker && (
-                      <div className="absolute top-8 right-0 z-50 bg-base-100 border border-base-300 rounded-lg shadow-xl overflow-hidden min-w-[80px]">
+                      <div style={{...pickerPopupStyle,minWidth:'80px',padding:0,overflow:'hidden'}}>
                         {([TaskPriority.HIGH, TaskPriority.MEDIUM, TaskPriority.LOW] as const).map((p) => (
-                          <button key={p} className="block w-full text-left px-3 py-1.5 text-sm hover:bg-base-200 text-base-content"
+                          <button key={p}
+                            style={{display:'block',width:'100%',textAlign:'left',padding:'6px 12px',fontSize:'13px',background:'transparent',border:'none',cursor:'pointer',color:p===TaskPriority.HIGH?'var(--color-alert)':p===TaskPriority.MEDIUM?'var(--color-action)':'var(--color-text-sec)'}}
                             onClick={() => { setNewPriority(p); setShowPriorityPicker(false); }}>
                             {p === TaskPriority.HIGH ? 'Alta' : p === TaskPriority.MEDIUM ? 'Média' : 'Baixa'}
                           </button>
@@ -638,21 +689,18 @@ export default function TasksNotionView() {
                     )}
                   </div>
 
-                  <button onClick={() => handleSaveNew()} className="btn btn-ghost btn-xs flex-shrink-0">✓</button>
-                  <button onClick={resetForm} className="btn btn-ghost btn-xs flex-shrink-0"><X size={13} /></button>
+                  <button onClick={() => handleSaveNew()} style={{...ghostBtnStyle,fontSize:'13px'}}>✓</button>
+                  <button onClick={resetForm} style={ghostBtnStyle}><X size={13} /></button>
                 </div>
 
                 {/* Duration + Start row */}
-                <div className="flex items-center gap-2 px-4 pb-3 border-t border-base-300/50 pt-2">
-                  <Clock size={11} className="text-base-content/40" />
-                  <span className="text-xs text-base-content/40">Duração:</span>
-                  <div className="flex gap-1">
+                <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'8px 16px 12px',borderTop:'1px solid var(--color-border)'}}>
+                  <Clock size={11} style={{color:'var(--color-text-muted)'}} />
+                  <span style={{fontSize:'11px',color:'var(--color-text-muted)'}}>Duração:</span>
+                  <div style={{display:'flex',gap:'4px'}}>
                     {[15, 25, 30, 45, 60].map((d) => (
                       <button key={d}
-                        className={cn('text-xs px-2 py-0.5 rounded-full border transition-colors',
-                          newDuration === d
-                            ? 'border-primary text-primary bg-primary/10'
-                            : 'border-base-300 text-base-content/50 hover:border-base-content/50')}
+                        style={{fontSize:'11px',padding:'2px 8px',borderRadius:'999px',cursor:'pointer',border:`1px solid ${newDuration===d?'var(--color-action)':'var(--color-border)'}`,color:newDuration===d?'var(--color-action)':'var(--color-text-muted)',background:newDuration===d?'var(--color-action-bg)':'transparent'}}
                         onClick={() => setNewDuration(d)}>
                         {d}m
                       </button>
@@ -660,7 +708,7 @@ export default function TasksNotionView() {
                   </div>
 
                   {isStudySelected && (
-                    <span className="flex items-center gap-1 text-xs text-red-400">
+                    <span style={{display:'flex',alignItems:'center',gap:'4px',fontSize:'11px',color:'var(--color-alert)'}}>
                       <Brain size={11} /> Pomodoro
                     </span>
                   )}
@@ -668,7 +716,7 @@ export default function TasksNotionView() {
                   <button
                     onClick={handleSaveAndStart}
                     disabled={!newTitle.trim()}
-                    className="ml-auto btn btn-primary btn-xs gap-1.5 disabled:opacity-40"
+                    style={{marginLeft:'auto',background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'6px',padding:'4px 10px',fontSize:'11px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',opacity:!newTitle.trim()?0.4:1}}
                   >
                     <Play size={11} /> Start
                   </button>
@@ -678,10 +726,12 @@ export default function TasksNotionView() {
 
             {/* Empty state */}
             {activeTasks.length === 0 && !showNewTaskForm && (
-              <div className="flex flex-col items-center justify-center py-16 text-base-content/30">
-                <ListTodo size={36} className="mb-3" />
-                <p className="text-sm">Nenhuma tarefa aqui</p>
-                <button className="mt-3 text-xs text-primary hover:underline" onClick={() => setShowNewTaskForm(true)}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'64px 0',color:'var(--color-text-muted)'}}>
+                <ListTodo size={36} style={{marginBottom:'12px'}} />
+                <p style={{fontSize:'13px'}}>Nenhuma tarefa aqui</p>
+                <button
+                  style={{marginTop:'12px',fontSize:'11px',color:'var(--color-action)',background:'none',border:'none',cursor:'pointer',textDecoration:'underline'}}
+                  onClick={() => setShowNewTaskForm(true)}>
                   + Criar tarefa
                 </button>
               </div>
@@ -692,7 +742,7 @@ export default function TasksNotionView() {
               if (grouped[key].length === 0) return null;
               return (
                 <div key={key} className="mb-4">
-                  <div className="text-xs font-semibold text-base-content/40 uppercase tracking-widest py-2 border-b border-base-300 mb-1">
+                  <div style={{fontSize:'11px',fontWeight:600,color:'var(--color-text-muted)',textTransform:'uppercase',letterSpacing:'0.08em',padding:'8px 0',borderBottom:'1px solid var(--color-border)',marginBottom:'4px'}}>
                     {label}
                   </div>
                   {grouped[key].map((task) => (
@@ -704,23 +754,26 @@ export default function TasksNotionView() {
 
             {/* Completed accordion */}
             {completedTasks.length > 0 && (
-              <div className="mt-6 border-t border-base-300 pt-2">
-                <div className="flex items-center">
+              <div style={{marginTop:'24px',borderTop:'1px solid var(--color-border)',paddingTop:'8px'}}>
+                <div style={{display:'flex',alignItems:'center'}}>
                   <button
                     onClick={() => setShowCompleted((v) => !v)}
-                    className="flex items-center gap-1.5 flex-1 text-sm text-base-content/50 hover:text-base-content py-2 transition-colors"
+                    style={{display:'flex',alignItems:'center',gap:'6px',flex:1,fontSize:'13px',color:'var(--color-text-muted)',background:'none',border:'none',cursor:'pointer',padding:'8px 0'}}
                   >
                     <ChevronDown size={14} className={cn('transition-transform', showCompleted && 'rotate-180')} />
                     Concluídas ({completedTasks.length})
                   </button>
                   {showCompleted && (
-                    <button onClick={handleClearCompleted} className="text-xs text-error/50 hover:text-error transition-colors py-2 px-2">
+                    <button
+                      onClick={handleClearCompleted}
+                      style={{fontSize:'11px',color:'var(--color-alert)',background:'none',border:'none',cursor:'pointer',padding:'8px'}}
+                    >
                       Limpar
                     </button>
                   )}
                 </div>
                 {showCompleted && (
-                  <div className="opacity-60">
+                  <div style={{opacity:0.6}}>
                     {completedTasks.map((task) => (
                       <TaskRow key={task.id} task={task} onToggle={handleToggle} onSelect={setSelectedTask} />
                     ))}

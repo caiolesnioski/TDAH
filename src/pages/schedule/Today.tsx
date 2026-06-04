@@ -1,18 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
 import { Clock, CheckCircle2, Circle, CalendarDays, Zap, Sun } from 'lucide-react';
 import { TaskStatus, TimeBlockType } from '@/types';
 import type { Task, TimeBlock } from '@/types';
 import confetti from 'canvas-confetti';
 import toast from 'react-hot-toast';
-import { cn } from '@/lib/utils';
 
-const BLOCK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  [TimeBlockType.WORK]:  { bg: 'bg-blue-100 dark:bg-blue-900/40',   text: 'text-blue-700 dark:text-blue-300',   border: 'border-blue-400' },
-  [TimeBlockType.CLASS]: { bg: 'bg-purple-100 dark:bg-purple-900/40', text: 'text-purple-700 dark:text-purple-300', border: 'border-purple-400' },
-  [TimeBlockType.FIXED]: { bg: 'bg-orange-100 dark:bg-orange-900/40', text: 'text-orange-700 dark:text-orange-300', border: 'border-orange-400' },
-  [TimeBlockType.TASK]:  { bg: 'bg-green-100 dark:bg-green-900/40',  text: 'text-green-700 dark:text-green-300',  border: 'border-green-400' },
+const BLOCK_COLORS: Record<string, { bg: string; text: string; borderColor: string }> = {
+  [TimeBlockType.WORK]:  { bg: 'var(--color-focus-bg)',  text: 'var(--color-focus)',  borderColor: 'var(--color-focus)' },
+  [TimeBlockType.CLASS]: { bg: 'var(--color-reward-bg)', text: 'var(--color-reward)', borderColor: 'var(--color-reward)' },
+  [TimeBlockType.FIXED]: { bg: 'var(--color-action-bg)', text: 'var(--color-action)', borderColor: 'var(--color-action)' },
+  [TimeBlockType.TASK]:  { bg: 'var(--color-done-bg)',   text: 'var(--color-done)',   borderColor: 'var(--color-done)' },
 };
 
 const loadTasks   = (): Task[]      => { try { return JSON.parse(localStorage.getItem('tasks') ?? '[]'); } catch { return []; } };
@@ -48,9 +46,7 @@ export default function Today() {
 
   const doneTasks = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
   const progress = tasks.length > 0 ? Math.round((doneTasks.length / tasks.length) * 100) : 0;
-
   const currentMinutes = now.getHours() * 60 + now.getMinutes();
-
   const nextBlock = blocks.find((b) => timeToMin(b.startTime) > currentMinutes);
 
   const handleToggle = (id: string, complete: boolean) => {
@@ -72,135 +68,140 @@ export default function Today() {
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
 
-            {/* Header com data */}
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="h-5 w-5 opacity-80" />
-                <span className="text-sm opacity-80">Hoje</span>
-              </div>
-              <h1 className="text-3xl font-bold">{DAYS_PT[dayOfWeek]}</h1>
-              <p className="text-lg opacity-90">{today.getDate()} de {MONTHS_PT[today.getMonth()]} de {today.getFullYear()}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <Clock className="h-4 w-4 opacity-70" />
-                <span className="text-xl font-mono font-semibold">
-                  {String(now.getHours()).padStart(2, '0')}:{String(now.getMinutes()).padStart(2, '0')}
-                </span>
-              </div>
-            </div>
+      {/* Hero do dia */}
+      <div style={{background:'var(--color-focus-bg)',borderLeft:'4px solid var(--color-focus)',borderRadius:'12px',padding:'24px'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <CalendarDays style={{width:'20px',height:'20px',color:'var(--color-focus)',opacity:0.7}} />
+          <span style={{fontSize:'13px',color:'var(--color-text-sec)'}}>Hoje</span>
+        </div>
+        <h1 style={{fontSize:'28px',fontWeight:700,color:'var(--color-text)'}}>{DAYS_PT[dayOfWeek]}</h1>
+        <p style={{fontSize:'16px',color:'var(--color-text-sec)'}}>{today.getDate()} de {MONTHS_PT[today.getMonth()]} de {today.getFullYear()}</p>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginTop:'8px'}}>
+          <Clock style={{width:'16px',height:'16px',color:'var(--color-focus)',opacity:0.7}} />
+          <span style={{fontSize:'18px',fontFamily:'monospace',fontWeight:600,color:'var(--color-focus)'}}>
+            {String(now.getHours()).padStart(2, '0')}:{String(now.getMinutes()).padStart(2, '0')}
+          </span>
+        </div>
+      </div>
 
-            {/* Progresso do dia */}
-            <div className="bg-base-200 rounded-xl border border-base-300 p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Progresso do Dia</span>
-                  <span className="text-sm font-bold text-gray-800 dark:text-white">{doneTasks.length}/{tasks.length}</span>
-                </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-3">
-                  <div
-                    className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-500"
-                    style={{ width: tasks.length === 0 ? '0%' : `${Math.round((doneTasks.length / tasks.length) * 100)}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-1.5">
-                  {allDone ? '🎉 Parabéns! Você completou tudo hoje!' : progress >= 50 ? '💪 Você está indo muito bem!' : 'Vamos lá, você consegue! 🚀'}
-                </p>
-            </div>
+      {/* Progresso do dia */}
+      <div style={{background:'var(--color-surface)',border:'1px solid var(--color-border)',borderRadius:'12px',padding:'16px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
+          <span style={{fontSize:'13px',fontWeight:500,color:'var(--color-text-sec)'}}>Progresso do Dia</span>
+          <span style={{fontSize:'13px',fontWeight:700,color:'var(--color-text)'}}>{doneTasks.length}/{tasks.length}</span>
+        </div>
+        <div style={{background:'var(--color-border)',borderRadius:'999px',height:'6px'}}>
+          <div style={{
+            background:'var(--color-done)',height:'100%',borderRadius:'999px',
+            width:tasks.length===0?'0%':`${Math.round((doneTasks.length/tasks.length)*100)}%`,
+            transition:'width 0.5s',
+          }} />
+        </div>
+        <p style={{fontSize:'11px',color:'var(--color-text-muted)',marginTop:'6px'}}>
+          {allDone ? '🎉 Parabéns! Você completou tudo hoje!' : progress >= 50 ? '💪 Você está indo muito bem!' : 'Vamos lá, você consegue! 🚀'}
+        </p>
+      </div>
 
-            {/* Próximo compromisso */}
-            {nextBlock && (
-              <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl border-l-4 border-amber-400 p-4 flex items-center gap-3">
-                  <Zap className="h-5 w-5 text-amber-500 shrink-0" />
-                  <div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wide">Próximo compromisso</p>
-                    <p className="font-semibold text-gray-800 dark:text-white">{nextBlock.title}</p>
-                    <p className="text-xs text-gray-500">às {nextBlock.startTime} — {nextBlock.endTime}</p>
+      {/* Próximo compromisso */}
+      {nextBlock && (
+        <div style={{background:'var(--color-action-bg)',borderLeft:'4px solid var(--color-action)',borderRadius:'8px',padding:'16px',display:'flex',alignItems:'center',gap:'12px'}}>
+          <Zap style={{width:'20px',height:'20px',color:'var(--color-action)',flexShrink:0}} />
+          <div>
+            <p style={{fontSize:'11px',color:'var(--color-action)',fontWeight:500,textTransform:'uppercase',letterSpacing:'0.05em'}}>Próximo compromisso</p>
+            <p style={{fontWeight:600,color:'var(--color-text)'}}>{nextBlock.title}</p>
+            <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>às {nextBlock.startTime} — {nextBlock.endTime}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Compromissos de hoje */}
+      {blocks.length > 0 && (
+        <div className="space-y-3">
+          <h2 style={{fontSize:'11px',fontWeight:600,color:'var(--color-text-sec)',textTransform:'uppercase',letterSpacing:'0.08em'}}>
+            Compromissos de Hoje
+          </h2>
+          {blocks.map((block) => {
+            const cfg = BLOCK_COLORS[block.type] ?? BLOCK_COLORS[TimeBlockType.FIXED];
+            const started = timeToMin(block.startTime) <= currentMinutes;
+            const ended   = timeToMin(block.endTime)   <= currentMinutes;
+            const active  = started && !ended;
+            return (
+              <div key={block.id} style={{
+                display:'flex',alignItems:'center',gap:'12px',padding:'12px',borderRadius:'12px',
+                background:cfg.bg,borderLeft:`4px solid ${cfg.borderColor}`,
+                ...(active ? {outline:'2px solid var(--color-focus)',outlineOffset:'2px'} : {}),
+              }}>
+                <div>
+                  <p style={{fontWeight:500,fontSize:'13px',color:cfg.text}}>{block.title}</p>
+                  <p style={{fontSize:'11px',color:'var(--color-text-muted)'}}>{block.startTime} — {block.endTime}</p>
+                </div>
+                {active && <span style={{marginLeft:'auto',background:'var(--color-focus)',color:'#fff',borderRadius:'999px',padding:'2px 8px',fontSize:'12px',fontWeight:500}}>Agora</span>}
+                {ended  && <span style={{marginLeft:'auto',background:'var(--color-done-bg)',color:'var(--color-done)',borderRadius:'999px',padding:'2px 8px',fontSize:'12px',fontWeight:500,opacity:0.7}}>Concluído</span>}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tarefas do dia */}
+      <div className="space-y-3">
+        <h2 style={{fontSize:'11px',fontWeight:600,color:'var(--color-text-sec)',textTransform:'uppercase',letterSpacing:'0.08em'}}>
+          Suas Tarefas
+        </h2>
+        {tasks.length === 0 ? (
+          <div style={{textAlign:'center',padding:'48px 24px'}}>
+            <Sun style={{width:'48px',height:'48px',margin:'0 auto 8px',color:'var(--color-border)'}} />
+            <p style={{fontWeight:600,color:'var(--color-text-sec)'}}>Dia livre! Aproveite</p>
+            <p style={{fontSize:'13px',color:'var(--color-text-muted)'}}>Nenhuma tarefa para hoje</p>
+          </div>
+        ) : (
+          tasks.map((task) => {
+            const done = task.status === TaskStatus.COMPLETED;
+            return (
+              <div key={task.id} style={{
+                background:'var(--color-surface)',border:'1px solid var(--color-border)',
+                borderRadius:'12px',opacity:done?0.6:1,transition:'box-shadow 0.2s',
+              }}>
+                <div style={{padding:'12px',display:'flex',alignItems:'center',gap:'12px'}}>
+                  <button onClick={() => handleToggle(task.id, !done)} style={{flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0}}>
+                    {done
+                      ? <CheckCircle2 style={{width:'24px',height:'24px',color:'var(--color-done)'}} />
+                      : <Circle style={{width:'24px',height:'24px',color:'var(--color-border)'}} />
+                    }
+                  </button>
+                  <div style={{flex:1,minWidth:0}}>
+                    <p style={{
+                      fontWeight:500,color:'var(--color-text)',
+                      overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',
+                      textDecoration:done?'line-through':'none',
+                    }}>
+                      {task.title || '(sem título)'}
+                    </p>
+                    {task.estimatedMinutes > 0 && (
+                      <span style={{fontSize:'11px',color:'var(--color-text-muted)',display:'flex',alignItems:'center',gap:'4px'}}>
+                        <Clock style={{width:'12px',height:'12px'}} />{task.estimatedMinutes}min
+                      </span>
+                    )}
                   </div>
-              </div>
-            )}
-
-            {/* Compromissos de hoje */}
-            {blocks.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                  Compromissos de Hoje
-                </h2>
-                {blocks.map((block) => {
-                  const cfg = BLOCK_COLORS[block.type] ?? BLOCK_COLORS[TimeBlockType.FIXED];
-                  const started = timeToMin(block.startTime) <= currentMinutes;
-                  const ended   = timeToMin(block.endTime)   <= currentMinutes;
-                  const active  = started && !ended;
-                  return (
-                    <div key={block.id}
-                      className={cn(
-                        'flex items-center gap-3 p-3 rounded-xl border-l-4',
-                        cfg.bg, cfg.border,
-                        active && 'ring-2 ring-offset-1 ring-blue-400'
-                      )}>
-                      <div>
-                        <p className={cn('font-medium text-sm', cfg.text)}>{block.title}</p>
-                        <p className="text-xs text-gray-500">{block.startTime} — {block.endTime}</p>
-                      </div>
-                      {active && <Badge className="ml-auto bg-blue-500 text-white animate-pulse">Agora</Badge>}
-                      {ended  && <Badge variant="secondary" className="ml-auto opacity-50">Concluído</Badge>}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Tarefas do dia */}
-            <div className="space-y-3">
-              <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                Suas Tarefas
-              </h2>
-              {tasks.length === 0 ? (
-                <div className="text-center py-10 space-y-2">
-                  <Sun className="h-12 w-12 text-gray-300 mx-auto" />
-                  <p className="font-semibold text-gray-700 dark:text-gray-300">Dia livre! Aproveite</p>
-                  <p className="text-sm text-gray-400">Nenhuma tarefa para hoje</p>
+                  {done && <span style={{background:'var(--color-done-bg)',color:'var(--color-done)',borderRadius:'999px',padding:'2px 8px',fontSize:'12px',fontWeight:500,flexShrink:0}}>✓ Feito</span>}
                 </div>
-              ) : (
-                tasks.map((task) => {
-                  const done = task.status === TaskStatus.COMPLETED;
-                  return (
-                    <div key={task.id}
-                      className={cn('bg-base-200 rounded-xl border border-base-300 hover:shadow-md transition-shadow', done && 'opacity-60')}>
-                      <div className="p-3 flex items-center gap-3">
-                        <button onClick={() => handleToggle(task.id, !done)} className="shrink-0">
-                          {done
-                            ? <CheckCircle2 className="h-6 w-6 text-green-500" />
-                            : <Circle className="h-6 w-6 text-gray-300 hover:text-green-400 transition-colors" />
-                          }
-                        </button>
-                        <div className="flex-1 min-w-0">
-                          <p className={cn('font-medium text-gray-800 dark:text-white truncate', done && 'line-through')}>
-                            {task.title || '(sem título)'}
-                          </p>
-                          {task.estimatedMinutes > 0 && (
-                            <span className="text-xs text-gray-400 flex items-center gap-1">
-                              <Clock className="h-3 w-3" />{task.estimatedMinutes}min
-                            </span>
-                          )}
-                        </div>
-                        {done && <Badge className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 shrink-0">✓ Feito</Badge>}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-
-            {/* Botão de resumo do dia */}
-            {(now.getHours() >= 18 || doneTasks.length >= 1) && (
-              <div className="pt-2 pb-4">
-                <button
-                  onClick={() => navigate('/summary/daily')}
-                  className="btn btn-ghost w-full"
-                >
-                  Ver resumo do dia →
-                </button>
               </div>
-            )}
+            );
+          })
+        )}
+      </div>
+
+      {/* Botão de resumo do dia */}
+      {(now.getHours() >= 18 || doneTasks.length >= 1) && (
+        <div style={{paddingTop:'8px',paddingBottom:'16px'}}>
+          <button
+            onClick={() => navigate('/summary/daily')}
+            style={{width:'100%',background:'transparent',color:'var(--color-focus)',border:'1px solid var(--color-focus)',borderRadius:'8px',padding:'10px 16px',cursor:'pointer',fontWeight:500}}
+          >
+            Ver resumo do dia →
+          </button>
+        </div>
+      )}
 
     </div>
   );

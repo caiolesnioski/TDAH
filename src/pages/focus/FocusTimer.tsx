@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Play, Pause, RotateCcw, Coffee, Brain } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 const WORK_DURATION = 25 * 60;
 const BREAK_DURATION = 5 * 60;
@@ -55,110 +52,102 @@ export default function FocusTimer() {
   };
 
   const dotCount = Math.max(4, sessionCount + (sessionCount % 4 === 0 ? 0 : 4 - (sessionCount % 4)));
+  const timerColor = isBreak ? 'var(--color-done)' : 'var(--color-action)';
 
   return (
-    <div className="flex flex-1 items-center justify-center min-h-[calc(100vh-3rem)] bg-gradient-to-br from-slate-50 to-gray-100 dark:from-gray-900 dark:to-slate-900">
-          <div className="flex flex-col items-center gap-8 px-4 w-full max-w-sm">
+    <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 3rem)', background: 'var(--color-bg)' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', padding: '16px', width: '100%', maxWidth: '360px' }}>
 
-            {/* Título */}
-            <div className="text-center space-y-1">
-              <div className="flex items-center gap-2 justify-center">
-                {isBreak
-                  ? <Coffee className="h-5 w-5 text-green-500" />
-                  : <Brain className="h-5 w-5 text-blue-500" />
-                }
-                <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
-                  {isBreak ? 'Hora da Pausa' : 'Modo Foco'}
-                </h1>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {isBreak ? 'Descanse um pouco ☕' : 'Mantenha o foco 🧠'}
-              </p>
-            </div>
+        {/* Título */}
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center', marginBottom: '4px' }}>
+            {isBreak
+              ? <Coffee style={{ width: '20px', height: '20px', color: 'var(--color-done)' }} />
+              : <Brain style={{ width: '20px', height: '20px', color: 'var(--color-focus)' }} />
+            }
+            <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>
+              {isBreak ? 'Hora da Pausa' : 'Modo Foco'}
+            </h1>
+          </div>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-sec)', margin: 0 }}>
+            {isBreak ? 'Descanse um pouco ☕' : 'Mantenha o foco 🧠'}
+          </p>
+        </div>
 
-            {/* Timer circular */}
-            <div className="relative w-52 h-52">
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 200 200">
-                <circle
-                  cx="100" cy="100" r={RADIUS}
-                  fill="none" stroke="#2A3A55" strokeWidth="6"
-                />
-                <circle
-                  cx="100" cy="100" r={RADIUS}
-                  fill="none" stroke="#6366F1" strokeWidth="6"
-                  strokeLinecap="round"
-                  strokeDasharray={CIRCUMFERENCE}
-                  strokeDashoffset={strokeDashoffset}
-                  style={{ transition: 'stroke-dashoffset 1s linear' }}
-                />
-              </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
-                <span className="text-5xl font-bold font-mono tabular-nums text-gray-800 dark:text-white">
-                  {minutes}:{seconds}
-                </span>
-                <span className="text-sm text-gray-400">
-                  {isBreak ? 'pausa' : 'foco'}
-                </span>
-              </div>
-            </div>
-
-            {/* Controles */}
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-12 w-12 rounded-full"
-                onClick={handleReset}
-                title="Reiniciar"
-              >
-                <RotateCcw className="h-5 w-5" />
-              </Button>
-              <Button
-                size="icon"
-                onClick={() => setIsRunning((r) => !r)}
-                className={cn(
-                  'h-16 w-16 rounded-full text-white shadow-lg',
-                  isBreak
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                )}
-              >
-                {isRunning
-                  ? <Pause className="h-7 w-7" />
-                  : <Play className="h-7 w-7 translate-x-0.5" />
-                }
-              </Button>
-              <div className="h-12 w-12" />
-            </div>
-
-            {/* Sessões completadas */}
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex gap-2">
-                {Array.from({ length: dotCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={cn(
-                      'w-2.5 h-2.5 rounded-full transition-colors',
-                      i < sessionCount ? 'bg-primary' : 'bg-border'
-                    )}
-                  />
-                ))}
-              </div>
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                {sessionCount} pomodoro{sessionCount !== 1 ? 's' : ''} completado{sessionCount !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            {/* Dicas */}
-            <Card className="w-full border-0 shadow-md bg-white dark:bg-gray-800">
-              <CardContent className="p-4 space-y-1 text-sm text-gray-500 dark:text-gray-400">
-                <p>🍅 <strong className="text-gray-700 dark:text-gray-300">25 min</strong> de foco concentrado</p>
-                <p>☕ <strong className="text-gray-700 dark:text-gray-300">5 min</strong> de pausa</p>
-                <p>🏆 A cada 4 sessões, faça uma pausa longa</p>
-              </CardContent>
-            </Card>
-
+        {/* Timer circular */}
+        <div style={{ position: 'relative', width: '208px', height: '208px' }}>
+          <svg
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
+            viewBox="0 0 200 200"
+          >
+            <circle cx="100" cy="100" r={RADIUS} fill="none" stroke="var(--color-border)" strokeWidth="6" />
+            <circle
+              cx="100" cy="100" r={RADIUS}
+              fill="none"
+              stroke={timerColor}
+              strokeWidth="6"
+              strokeLinecap="round"
+              strokeDasharray={CIRCUMFERENCE}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: 'stroke-dashoffset 1s linear' }}
+            />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <span style={{ fontSize: '48px', fontWeight: 700, fontFamily: 'monospace', color: 'var(--color-text)', lineHeight: 1 }}>
+              {minutes}:{seconds}
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+              {isBreak ? 'pausa' : 'foco'}
+            </span>
           </div>
         </div>
+
+        {/* Controles */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button
+            onClick={handleReset}
+            title="Reiniciar"
+            style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'transparent', border: '1px solid var(--color-border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text)' }}
+          >
+            <RotateCcw style={{ width: '20px', height: '20px' }} />
+          </button>
+          <button
+            onClick={() => setIsRunning((r) => !r)}
+            style={{ width: '64px', height: '64px', borderRadius: '50%', background: timerColor, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: isBreak ? 'white' : '#1E1E1C', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+          >
+            {isRunning
+              ? <Pause style={{ width: '28px', height: '28px' }} />
+              : <Play style={{ width: '28px', height: '28px', transform: 'translateX(2px)' }} />
+            }
+          </button>
+          <div style={{ width: '48px', height: '48px' }} />
+        </div>
+
+        {/* Sessões completadas */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {Array.from({ length: dotCount }).map((_, i) => (
+              <div
+                key={i}
+                style={{ width: '10px', height: '10px', borderRadius: '50%', background: i < sessionCount ? 'var(--color-action)' : 'var(--color-border)', transition: 'background 0.3s' }}
+              />
+            ))}
+          </div>
+          <span style={{ fontSize: '13px', color: 'var(--color-text-sec)' }}>
+            {sessionCount} pomodoro{sessionCount !== 1 ? 's' : ''} completado{sessionCount !== 1 ? 's' : ''}
+          </span>
+        </div>
+
+        {/* Dicas */}
+        <div style={{ width: '100%', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', color: 'var(--color-text-sec)' }}>
+            <p style={{ margin: 0 }}>🍅 <strong style={{ color: 'var(--color-text)' }}>25 min</strong> de foco concentrado</p>
+            <p style={{ margin: 0 }}>☕ <strong style={{ color: 'var(--color-text)' }}>5 min</strong> de pausa</p>
+            <p style={{ margin: 0 }}>🏆 A cada 4 sessões, faça uma pausa longa</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
   );
 }
