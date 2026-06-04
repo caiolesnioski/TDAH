@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import dayjs, { type Dayjs } from 'dayjs';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useCalendarPanelStore } from '@/store/calendarPanelStore';
 import { useTasks } from '@/hooks/useTasks';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
@@ -20,7 +20,7 @@ function buildGrid(currentMonth: Dayjs): Dayjs[] {
 }
 
 export function CalendarPanel() {
-  const { isOpen, selectedDate, selectDate } = useCalendarPanelStore();
+  const { isOpen, selectedDate, selectDate, close } = useCalendarPanelStore();
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
   const { data: tasks = [] } = useTasks();
   const { data: timeBlocks = [] } = useTimeBlocks();
@@ -63,11 +63,25 @@ export function CalendarPanel() {
   const hasActivities = dayTasks.length > 0 || dayBlocks.length > 0;
 
   return (
-    <div
-      className={`fixed top-0 right-0 h-screen w-[278px] bg-base-200 border-l border-base-300 z-40 flex flex-col transition-transform duration-200 ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      }`}
-    >
+    <>
+      {/* Overlay — fechar ao clicar fora */}
+      {isOpen && (
+        <div className="fixed inset-0 z-30" onClick={close} />
+      )}
+
+      <div
+        className={`fixed top-0 right-0 h-screen w-[278px] bg-base-200 border-l border-base-300 z-40 flex flex-col transition-transform duration-200 ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Cabeçalho com título e botão X */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-0 shrink-0">
+          <span className="text-sm font-semibold text-base-content/80">Calendário</span>
+          <button onClick={close} className="btn btn-ghost btn-xs btn-circle">
+            <X size={14} />
+          </button>
+        </div>
+
       {/* Mini Calendar */}
       <div className="p-4 border-b border-base-300 shrink-0">
         <div className="flex items-center justify-between mb-3">
@@ -169,5 +183,6 @@ export function CalendarPanel() {
         </div>
       </div>
     </div>
+    </>
   );
 }

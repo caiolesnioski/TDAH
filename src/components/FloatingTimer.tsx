@@ -1,11 +1,14 @@
 import { useEffect } from 'react';
-import { X, Pause, Play, Brain, Timer } from 'lucide-react';
+import { X, Pause, Play, Brain, Timer, CheckCircle } from 'lucide-react';
 import { useFloatingTimerStore } from '@/store/floatingTimerStore';
+import { useUpdateTask } from '@/hooks/useTasks';
+import { TaskStatus } from '@/types';
 import { cn } from '@/lib/utils';
 
 export default function FloatingTimer() {
   const { task, timeRemaining, durationMinutes, isRunning, isPomodoro, tick, pause, resume, stop } =
     useFloatingTimerStore();
+  const updateTask = useUpdateTask();
 
   useEffect(() => {
     if (!isRunning) return;
@@ -14,6 +17,13 @@ export default function FloatingTimer() {
   }, [isRunning, tick]);
 
   if (!task) return null;
+
+  function handleComplete() {
+    if (task && !task.id.startsWith('tmp-')) {
+      updateTask.mutate({ id: task.id, data: { status: TaskStatus.COMPLETED } });
+    }
+    stop();
+  }
 
   const mins = String(Math.floor(timeRemaining / 60)).padStart(2, '0');
   const secs = String(timeRemaining % 60).padStart(2, '0');
@@ -54,14 +64,21 @@ export default function FloatingTimer() {
         </div>
 
         {done ? (
-          <p className="text-center text-sm text-success font-medium">Tempo esgotado!</p>
-        ) : (
           <div className="flex justify-center">
+            <button onClick={handleComplete} className="btn btn-success btn-sm gap-2">
+              <CheckCircle size={14} /> Concluir
+            </button>
+          </div>
+        ) : (
+          <div className="flex justify-center gap-2">
             <button
               onClick={isRunning ? pause : resume}
               className={cn('btn btn-sm gap-2', isPomodoro ? 'btn-error' : 'btn-primary')}
             >
               {isRunning ? <><Pause size={14} /> Pausar</> : <><Play size={14} /> Retomar</>}
+            </button>
+            <button onClick={handleComplete} className="btn btn-ghost btn-sm gap-1.5 text-success/70 hover:text-success">
+              <CheckCircle size={14} /> Concluir
             </button>
           </div>
         )}

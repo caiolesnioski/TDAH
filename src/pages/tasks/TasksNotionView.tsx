@@ -385,13 +385,28 @@ export default function TasksNotionView() {
     setShowPriorityPicker(false); setShowCategoryPicker(false);
   }
 
-  function handleSaveNew() {
+  function handleSaveNew(asCompleted = false) {
     const trimmed = newTitle.trim();
     if (!trimmed) return;
     const dueDate = newDate ? (newTime ? `${newDate}T${newTime}:00` : newDate) : undefined;
     createTask.mutate(
-      { title: trimmed, category: newCategory, priority: newPriority, dueDate },
-      { onSuccess: resetForm },
+      {
+        title: trimmed, category: newCategory, priority: newPriority, dueDate,
+        ...(asCompleted ? { status: TaskStatus.COMPLETED } : {}),
+      },
+      {
+        onSuccess: () => {
+          setNewTitle('');
+          setNewDate('');
+          setNewTime('');
+          setShowDatePicker(false);
+          setShowTimePicker(false);
+          setShowPriorityPicker(false);
+          setShowCategoryPicker(false);
+          if (asCompleted) setShowCompleted(true);
+          setTimeout(() => newTitleRef.current?.focus(), 0);
+        },
+      },
     );
   }
 
@@ -520,10 +535,23 @@ export default function TasksNotionView() {
           <div className="flex-1 overflow-y-auto px-4 pb-8">
             {/* Inline new-task form */}
             {showNewTaskForm && (
-              <div className="mb-4 bg-base-300/30 rounded-xl border border-base-300 overflow-hidden">
+              <div className="mb-4 bg-base-300/30 rounded-xl border border-base-300">
                 {/* Input row */}
                 <div className="flex items-center gap-2 px-4 py-2.5">
-                  <div className="w-4 h-4 rounded-full border-2 border-base-content/20 flex-shrink-0" />
+                  <button
+                    onClick={() => handleSaveNew(true)}
+                    title="Salvar como concluída"
+                    className={cn(
+                      'w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center group/circle',
+                      newTitle.trim()
+                        ? 'border-base-content/40 hover:border-success hover:bg-success/20 cursor-pointer'
+                        : 'border-base-content/15 cursor-default',
+                    )}
+                  >
+                    <svg viewBox="0 0 10 10" className="w-2.5 h-2.5 opacity-0 group-hover/circle:opacity-60 transition-opacity" fill="none">
+                      <path d="M2 5L4 7L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-success" />
+                    </svg>
+                  </button>
                   <input
                     ref={newTitleRef}
                     className="flex-1 text-sm bg-transparent focus:outline-none text-base-content placeholder:text-base-content/40 min-w-0"
@@ -610,7 +638,7 @@ export default function TasksNotionView() {
                     )}
                   </div>
 
-                  <button onClick={handleSaveNew} className="btn btn-ghost btn-xs flex-shrink-0">✓</button>
+                  <button onClick={() => handleSaveNew()} className="btn btn-ghost btn-xs flex-shrink-0">✓</button>
                   <button onClick={resetForm} className="btn btn-ghost btn-xs flex-shrink-0"><X size={13} /></button>
                 </div>
 
