@@ -1,7 +1,5 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   CheckCircle2,
   Flame,
@@ -30,7 +28,6 @@ import { TaskStatus, TaskCategory, TaskPriority } from '@/types';
 import type { UserStats, Achievement, Task } from '@/types';
 import { useTasks } from '@/hooks/useTasks';
 import EmptyState from '@/components/dashboard/EmptyState';
-import { TipBanner } from '@/components/ui/TipBanner';
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -175,30 +172,30 @@ function StatCard({
   value,
   subtitle,
   icon: Icon,
-  gradient,
-  iconBg,
+  accentColor,
+  accentBg,
 }: {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: React.ElementType;
-  gradient: string;
-  iconBg: string;
+  accentColor: string;
+  accentBg: string;
 }) {
   return (
-    <div className={`relative overflow-hidden rounded-xl min-h-[100px] ${gradient}`}>
-      <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-white/10" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 -ml-8 -mb-8 rounded-full bg-white/5" />
-      <div className="flex flex-row items-center justify-between p-4 pb-2">
-        <span className="text-sm font-medium text-white/90">{title}</span>
-        <div className={`p-2 rounded-xl ${iconBg}`}>
-          <Icon className="h-5 w-5 text-white" />
-        </div>
+    <div style={{
+      background: accentBg,
+      border: `1px solid ${accentColor}`,
+      borderLeft: `4px solid ${accentColor}`,
+      borderRadius: '12px',
+      padding: '20px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <Icon size={16} color={accentColor} />
+        <span style={{ fontSize: '13px', color: accentColor, fontWeight: 500 }}>{title}</span>
       </div>
-      <div className="px-4 pb-4">
-        <div className="text-3xl font-bold text-white">{value}</div>
-        {subtitle && <p className="text-sm text-white/70 mt-1">{subtitle}</p>}
-      </div>
+      <p style={{ fontSize: '32px', fontWeight: 700, color: 'var(--color-text)', margin: 0 }}>{value}</p>
+      {subtitle && <p style={{ fontSize: '12px', color: 'var(--color-text-sec)', margin: '4px 0 0 0' }}>{subtitle}</p>}
     </div>
   );
 }
@@ -206,13 +203,19 @@ function StatCard({
 function XPProgressBar({ currentXP, minXP, maxXP }: { currentXP: number; minXP: number; maxXP: number }) {
   const progress = ((currentXP - minXP) / (maxXP - minXP)) * 100;
   return (
-    <div className="relative h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+    <div style={{ position: 'relative', height: '16px', background: 'var(--color-border)', borderRadius: '999px', overflow: 'hidden' }}>
       <div
-        className="absolute h-full bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 rounded-full transition-all duration-500 ease-out"
-        style={{ width: `${Math.min(progress, 100)}%` }}
+        style={{
+          position: 'absolute',
+          height: '100%',
+          background: 'var(--color-done)',
+          borderRadius: '999px',
+          width: `${Math.min(progress, 100)}%`,
+          transition: 'width 500ms ease-out',
+        }}
       />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="text-sm font-bold text-gray-700 dark:text-white drop-shadow-sm">
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-text)', filter: 'drop-shadow(0 1px 1px rgba(255,255,255,0.5))' }}>
           {currentXP - minXP} / {maxXP - minXP} XP
         </span>
       </div>
@@ -225,72 +228,87 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
   const progress = (achievement.progress / achievement.maxProgress) * 100;
 
   return (
-    <div
-      className={`relative p-4 rounded-2xl border-2 transition-all duration-300 ${
-        isUnlocked
-          ? 'bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-300 dark:border-amber-600'
-          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
-      }`}
-    >
+    <div style={{
+      position: 'relative',
+      padding: '16px',
+      borderRadius: '12px',
+      border: isUnlocked ? '2px solid var(--color-reward)' : '1px solid var(--color-border)',
+      background: isUnlocked ? 'var(--color-reward-bg)' : 'var(--color-surface-2)',
+      transition: 'all 300ms',
+    }}>
       {isUnlocked && (
-        <div className="absolute -top-2 -right-2">
-          <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-full p-1">
-            <CheckCircle2 className="h-4 w-4 text-white" />
+        <div style={{ position: 'absolute', top: '-8px', right: '-8px' }}>
+          <div style={{ background: 'var(--color-reward)', borderRadius: '999px', padding: '4px', display: 'flex' }}>
+            <CheckCircle2 size={14} color="#fff" />
           </div>
         </div>
       )}
 
-      <div className="flex items-start gap-3">
-        <div
-          className={`p-3 rounded-xl ${
-            isUnlocked
-              ? 'bg-gradient-to-br from-amber-400 to-orange-500 text-white'
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
-          }`}
-        >
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <div style={{
+          padding: '10px',
+          borderRadius: '10px',
+          background: isUnlocked ? 'var(--color-reward)' : 'var(--color-border)',
+          color: isUnlocked ? '#fff' : 'var(--color-text-muted)',
+          display: 'flex',
+          flexShrink: 0,
+        }}>
           {getAchievementIcon(achievement.icon)}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className={`font-semibold truncate ${isUnlocked ? 'text-amber-800 dark:text-amber-300' : 'text-gray-600 dark:text-gray-400'}`}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h4 style={{
+              fontWeight: 600,
+              margin: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              color: isUnlocked ? 'var(--color-reward)' : 'var(--color-text-sec)',
+            }}>
               {achievement.title}
             </h4>
-            <Badge
-              variant="outline"
-              className={`shrink-0 text-xs ${
-                isUnlocked ? 'border-amber-300 text-amber-700 dark:text-amber-400' : 'border-gray-300 text-gray-500'
-              }`}
-            >
+            <span style={{
+              flexShrink: 0,
+              fontSize: '11px',
+              color: isUnlocked ? 'var(--color-reward)' : 'var(--color-text-muted)',
+              border: `1px solid ${isUnlocked ? 'var(--color-reward)' : 'var(--color-border)'}`,
+              borderRadius: '999px',
+              padding: '2px 6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}>
               {getCategoryIcon(achievement.category)}
-              <span className="ml-1">{getCategoryLabel(achievement.category)}</span>
-            </Badge>
+              {getCategoryLabel(achievement.category)}
+            </span>
           </div>
 
-          <p className={`text-sm mb-2 ${isUnlocked ? 'text-amber-700/80 dark:text-amber-400/80' : 'text-gray-500'}`}>
+          <p style={{ fontSize: '13px', margin: '0 0 8px 0', color: isUnlocked ? 'var(--color-text-sec)' : 'var(--color-text-muted)' }}>
             {achievement.description}
           </p>
 
           {!isUnlocked && (
-            <div className="space-y-1">
-              <div className="flex justify-between text-xs text-gray-500">
+            <div style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '4px' }}>
                 <span>Progresso</span>
-                <span>
-                  {achievement.progress}/{achievement.maxProgress}
-                </span>
+                <span>{achievement.progress}/{achievement.maxProgress}</span>
               </div>
-              <div className="h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
+              <div style={{ height: '6px', background: 'var(--color-border)', borderRadius: '999px', overflow: 'hidden' }}>
+                <div style={{
+                  height: '100%',
+                  background: 'var(--color-reward)',
+                  borderRadius: '999px',
+                  width: `${progress}%`,
+                  transition: 'width 300ms',
+                }} />
               </div>
             </div>
           )}
 
-          <div className="flex items-center gap-1 mt-2">
-            <Zap className={`h-4 w-4 ${isUnlocked ? 'text-amber-500' : 'text-gray-400'}`} />
-            <span className={`text-sm font-medium ${isUnlocked ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500'}`}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Zap size={14} color={isUnlocked ? 'var(--color-action)' : 'var(--color-text-muted)'} />
+            <span style={{ fontSize: '13px', fontWeight: 500, color: isUnlocked ? 'var(--color-action)' : 'var(--color-text-muted)' }}>
               +{achievement.xpReward} XP
             </span>
           </div>
@@ -304,29 +322,40 @@ function WeeklyProgressChart({ data }: { data: { day: string; completed: number 
   const maxCompleted = Math.max(...data.map((d) => d.completed), 1);
 
   return (
-    <div className="flex items-end justify-between gap-2 h-32">
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '8px', height: '128px' }}>
       {data.map((item, index) => {
         const height = (item.completed / maxCompleted) * 100;
         const isToday = index === data.length - 1;
 
         return (
-          <div key={item.day} className="flex flex-col items-center gap-2 flex-1">
-            <div className="relative w-full flex justify-center">
+          <div key={item.day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', flex: 1 }}>
+            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
               <div
-                className={`w-8 rounded-t-lg transition-all duration-500 ${
-                  isToday
-                    ? 'bg-gradient-to-t from-violet-500 to-purple-400'
-                    : 'bg-gradient-to-t from-emerald-400 to-teal-300'
-                }`}
-                style={{ height: `${Math.max(height, 8)}px` }}
+                style={{
+                  width: '32px',
+                  borderRadius: '4px 4px 0 0',
+                  height: `${Math.max(height, 8)}px`,
+                  background: isToday ? 'var(--color-reward)' : 'var(--color-done)',
+                  transition: 'height 500ms',
+                }}
               />
               {item.completed > 0 && (
-                <span className="absolute -top-6 text-xs font-semibold text-gray-600 dark:text-gray-300">
+                <span style={{
+                  position: 'absolute',
+                  top: '-20px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--color-text-sec)',
+                }}>
                   {item.completed}
                 </span>
               )}
             </div>
-            <span className={`text-xs font-medium ${isToday ? 'text-violet-600 dark:text-violet-400' : 'text-gray-500'}`}>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: isToday ? 'var(--color-reward)' : 'var(--color-text-muted)',
+            }}>
               {item.day}
             </span>
           </div>
@@ -336,33 +365,27 @@ function WeeklyProgressChart({ data }: { data: { day: string; completed: number 
   );
 }
 
-function TaskCategoryCard({
-  category,
-  count,
-  icon: Icon,
-  color,
-}: {
-  category: string;
-  count: number;
-  icon: React.ElementType;
-  color: string;
-}) {
-  return (
-    <div className={`flex items-center gap-3 p-3 rounded-xl ${color}`}>
-      <Icon className="h-5 w-5" />
-      <div className="flex-1">
-        <span className="text-sm font-medium">{category}</span>
-      </div>
-      <Badge variant="secondary" className="bg-white/20 text-current">
-        {count}
-      </Badge>
-    </div>
-  );
-}
+const categoryConfig: { key: keyof typeof TaskCategory; label: string; icon: React.ElementType; color: string; bg: string }[] = [
+  { key: 'STUDY',   label: 'Estudos',  icon: BookOpen,       color: 'var(--color-reward)', bg: 'var(--color-reward-bg)' },
+  { key: 'WORK',    label: 'Trabalho', icon: Briefcase,      color: 'var(--color-focus)',  bg: 'var(--color-focus-bg)'  },
+  { key: 'HOME',    label: 'Casa',     icon: Home,           color: 'var(--color-done)',   bg: 'var(--color-done-bg)'   },
+  { key: 'HEALTH',  label: 'Saúde',    icon: Dumbbell,       color: 'var(--color-alert)',  bg: 'var(--color-alert-bg)'  },
+  { key: 'LEISURE', label: 'Lazer',    icon: Gamepad2,       color: 'var(--color-action)', bg: 'var(--color-action-bg)' },
+  { key: 'OTHER',   label: 'Outros',   icon: MoreHorizontal, color: 'var(--color-text-muted)', bg: 'var(--color-surface-2)' },
+];
 
-// Função para selecionar citação aleatória (chamada fora do render)
 const getRandomQuote = () => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
 const initialQuote = getRandomQuote();
+
+const cardStyle: React.CSSProperties = {
+  background: 'var(--color-surface)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '12px',
+};
+
+const sectionHeaderStyle: React.CSSProperties = {
+  padding: '20px 20px 0 20px',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -374,12 +397,12 @@ export default function Dashboard() {
   const categoryCounts = useMemo(() => {
     const done = tasks.filter((t) => t.status === TaskStatus.COMPLETED);
     return {
-      study:   done.filter((t) => t.category === TaskCategory.STUDY).length,
-      work:    done.filter((t) => t.category === TaskCategory.WORK).length,
-      home:    done.filter((t) => t.category === TaskCategory.HOME).length,
-      health:  done.filter((t) => t.category === TaskCategory.HEALTH).length,
-      leisure: done.filter((t) => t.category === TaskCategory.LEISURE).length,
-      other:   done.filter((t) => t.category === TaskCategory.OTHER).length,
+      STUDY:   done.filter((t) => t.category === TaskCategory.STUDY).length,
+      WORK:    done.filter((t) => t.category === TaskCategory.WORK).length,
+      HOME:    done.filter((t) => t.category === TaskCategory.HOME).length,
+      HEALTH:  done.filter((t) => t.category === TaskCategory.HEALTH).length,
+      LEISURE: done.filter((t) => t.category === TaskCategory.LEISURE).length,
+      OTHER:   done.filter((t) => t.category === TaskCategory.OTHER).length,
     };
   }, [tasks]);
 
@@ -392,231 +415,337 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6 p-4 md:p-6">
-            {/* Mensagem Motivacional */}
-            <div className="bg-surface border-b border-border pb-6 px-6 pt-4 rounded-lg">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-primary/10 rounded-2xl">
-                  <Sparkles className="h-8 w-8 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold mb-1 text-foreground">Olá! Bem-vindo de volta!</h2>
-                  <p className="text-muted-foreground">{quote}</p>
-                </div>
+
+      {/* Saudação */}
+      <div style={{ ...cardStyle, padding: '20px', borderLeft: '4px solid var(--color-action)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{
+            padding: '12px',
+            background: 'var(--color-action-bg)',
+            borderRadius: '12px',
+            display: 'flex',
+            flexShrink: 0,
+          }}>
+            <Sparkles size={24} color="var(--color-action)" />
+          </div>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, margin: '0 0 4px 0', color: 'var(--color-text)' }}>
+              Olá! Bem-vindo de volta!
+            </h2>
+            <p style={{ margin: 0, color: 'var(--color-text-sec)', fontSize: '14px' }}>{quote}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Ação Rápida */}
+      <div style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px' }}>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+          <div>
+            <h3 style={{ margin: '0 0 4px 0', fontWeight: 600, color: 'var(--color-text)' }}>
+              O que você vai fazer hoje?
+            </h3>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-sec)' }}>
+              Suas tarefas estão esperando por você
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={() => navigate('/focus')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                borderRadius: '8px',
+                background: 'var(--color-focus-bg)',
+                color: 'var(--color-focus)',
+                border: '1px solid var(--color-focus)',
+              }}
+            >
+              <Timer size={14} />
+              Foco
+            </button>
+            <button
+              onClick={() => navigate('/tasks/notion')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                borderRadius: '8px',
+                background: 'var(--color-action)',
+                color: '#1E1E1C',
+                border: 'none',
+              }}
+            >
+              <Plus size={14} />
+              Adicionar Tarefa
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Nível e XP */}
+      <div style={{ ...cardStyle, padding: '24px' }}>
+        <div className="flex flex-col md:flex-row md:items-center gap-6">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '999px',
+                background: 'var(--color-action)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <span style={{ fontSize: '24px', fontWeight: 700, color: '#1E1E1C' }}>{stats.currentLevel.level}</span>
+              </div>
+              <div style={{
+                position: 'absolute',
+                bottom: '-4px',
+                right: '-4px',
+                background: 'var(--color-reward)',
+                borderRadius: '999px',
+                padding: '4px',
+                display: 'flex',
+              }}>
+                <Crown size={14} color="#fff" />
               </div>
             </div>
-
-            {/* Ação Rápida */}
-            <div className="bg-base-200 rounded-xl border border-base-300 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-800 dark:text-white">
-                      O que você vai fazer hoje?
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                      Suas tarefas estão esperando por você
-                    </p>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/focus')}
-                      className="gap-1.5 text-orange-600 border-orange-200 hover:bg-orange-50 dark:text-orange-400 dark:border-orange-800 dark:hover:bg-orange-950"
-                    >
-                      <Timer className="h-4 w-4" />
-                      Foco
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => navigate('/tasks/notion')}
-                      className="gap-1.5"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Adicionar Tarefa
-                    </Button>
-                  </div>
-                </div>
+            <div>
+              <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 2px 0', color: 'var(--color-text)' }}>
+                {stats.currentLevel.title}
+              </h3>
+              <p style={{ margin: '0 0 4px 0', fontSize: '13px', color: 'var(--color-text-sec)' }}>
+                Nível {stats.currentLevel.level}
+              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Zap size={14} color="var(--color-action)" />
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-action)' }}>
+                  {stats.totalXP} XP Total
+                </span>
+              </div>
             </div>
+          </div>
 
-            {/* Nível e XP */}
-            <div className="bg-base-200 rounded-xl border border-base-300 p-6">
-                <div className="flex flex-col md:flex-row md:items-center gap-6">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-white">{stats.currentLevel.level}</span>
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full p-1">
-                        <Crown className="h-4 w-4 text-white" />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-800 dark:text-white">{stats.currentLevel.title}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">Nível {stats.currentLevel.level}</p>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Zap className="h-4 w-4 text-amber-500" />
-                        <span className="text-sm font-semibold text-amber-600 dark:text-amber-400">{stats.totalXP} XP Total</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Progresso para o próximo nível</span>
-                      {nextLevel && (
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          Faltam <span className="font-bold text-violet-600 dark:text-violet-400">{xpToNextLevel} XP</span> para{' '}
-                          <span className="font-semibold">{nextLevel.title}</span>
-                        </span>
-                      )}
-                    </div>
-                    <XPProgressBar currentXP={stats.totalXP} minXP={stats.currentLevel.minXP} maxXP={stats.currentLevel.maxXP} />
-                  </div>
-                </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-sec)' }}>
+                Progresso para o próximo nível
+              </span>
+              {nextLevel && (
+                <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                  Faltam{' '}
+                  <span style={{ fontWeight: 700, color: 'var(--color-reward)' }}>{xpToNextLevel} XP</span>{' '}
+                  para <span style={{ fontWeight: 600, color: 'var(--color-text-sec)' }}>{nextLevel.title}</span>
+                </span>
+              )}
             </div>
+            <XPProgressBar currentXP={stats.totalXP} minXP={stats.currentLevel.minXP} maxXP={stats.currentLevel.maxXP} />
+          </div>
+        </div>
+      </div>
 
-            {/* Cards de Estatísticas */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                title="Tarefas Concluídas"
-                value={stats.tasksCompleted}
-                subtitle={`+${stats.tasksCompletedToday} hoje`}
+      {/* Cards de Métricas */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Tarefas Concluídas"
+          value={stats.tasksCompleted}
+          subtitle={`+${stats.tasksCompletedToday} hoje`}
+          icon={CheckCircle2}
+          accentColor="var(--color-done)"
+          accentBg="var(--color-done-bg)"
+        />
+        <StatCard
+          title="Sequência Atual"
+          value={`${stats.currentStreak} dias`}
+          subtitle={`Recorde: ${stats.longestStreak} dias`}
+          icon={Flame}
+          accentColor="var(--color-alert)"
+          accentBg="var(--color-alert-bg)"
+        />
+        <StatCard
+          title="Tempo Focado"
+          value={`${Math.floor(stats.totalMinutesFocused / 60)}h`}
+          subtitle={`${stats.totalMinutesFocused % 60} minutos`}
+          icon={Target}
+          accentColor="var(--color-focus)"
+          accentBg="var(--color-focus-bg)"
+        />
+        <StatCard
+          title="Conquistas"
+          value={unlockedAchievements.length}
+          subtitle={`de ${stats.achievements.length} disponíveis`}
+          icon={Trophy}
+          accentColor="var(--color-reward)"
+          accentBg="var(--color-reward-bg)"
+        />
+      </div>
+
+      {/* Grid de Conteúdo */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Progresso Semanal */}
+        <div style={{ ...cardStyle, gridColumn: 'span 2' }} className="lg:col-span-2">
+          <div style={sectionHeaderStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontWeight: 600, color: 'var(--color-text)' }}>
+                <TrendingUp size={18} color="var(--color-done)" />
+                Progresso Semanal
+              </h2>
+              <span style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '12px',
+                color: 'var(--color-done)',
+                background: 'var(--color-done-bg)',
+                border: '1px solid var(--color-done)',
+                borderRadius: '999px',
+                padding: '3px 10px',
+              }}>
+                <Calendar size={11} />
+                Esta semana
+              </span>
+            </div>
+          </div>
+          <div style={{ padding: '0 20px 20px 20px' }}>
+            {hasWeeklyActivity ? (
+              <WeeklyProgressChart data={stats.weeklyProgress} />
+            ) : (
+              <EmptyState
+                icon={TrendingUp}
+                message="Complete sua primeira tarefa para ver seu progresso aqui."
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Tarefas por Categoria */}
+        <div style={cardStyle}>
+          <div style={sectionHeaderStyle}>
+            <h2 style={{ margin: '0 0 16px 0', fontWeight: 600, color: 'var(--color-text)', paddingBottom: '0' }}>
+              Tarefas por Categoria
+            </h2>
+          </div>
+          <div style={{ padding: '0 20px 20px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {stats.tasksCompleted === 0 ? (
+              <EmptyState
                 icon={CheckCircle2}
-                gradient="bg-gradient-to-br from-emerald-400 to-teal-500"
-                iconBg="bg-emerald-600/30"
+                message="Suas tarefas por categoria aparecem aqui após você completar algumas."
+                ctaLabel="Adicionar tarefa"
+                onCta={() => navigate('/tasks/notion')}
               />
-              <StatCard
-                title="Sequência Atual"
-                value={`${stats.currentStreak} dias`}
-                subtitle={`Recorde: ${stats.longestStreak} dias`}
-                icon={Flame}
-                gradient="bg-gradient-to-br from-orange-400 to-red-500"
-                iconBg="bg-orange-600/30"
-              />
-              <StatCard
-                title="Tempo Focado"
-                value={`${Math.floor(stats.totalMinutesFocused / 60)}h`}
-                subtitle={`${stats.totalMinutesFocused % 60} minutos`}
-                icon={Target}
-                gradient="bg-gradient-to-br from-blue-400 to-indigo-500"
-                iconBg="bg-blue-600/30"
-              />
-              <StatCard
-                title="Conquistas"
-                value={unlockedAchievements.length}
-                subtitle={`de ${stats.achievements.length} disponíveis`}
-                icon={Trophy}
-                gradient="bg-gradient-to-br from-amber-400 to-yellow-500"
-                iconBg="bg-amber-600/30"
-              />
-            </div>
+            ) : (
+              categoryConfig.map(({ key, label, icon: Icon, color, bg }) => (
+                <div key={key} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: bg,
+                }}>
+                  <Icon size={16} color={color} />
+                  <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, color: 'var(--color-text)' }}>{label}</span>
+                  <span style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color,
+                    background: 'rgba(255,255,255,0.5)',
+                    borderRadius: '999px',
+                    padding: '2px 8px',
+                  }}>
+                    {categoryCounts[key]}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
 
-            {/* Grid de Conteúdo */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Progresso Semanal */}
-              <div className="lg:col-span-2 bg-base-200 rounded-xl border border-base-300">
-                <div className="p-5 pb-0">
-                  <div className="flex items-center justify-between">
-                    <h2 className="flex items-center gap-2 font-semibold text-base-content">
-                      <TrendingUp className="h-5 w-5 text-emerald-500" />
-                      Progresso Semanal
-                    </h2>
-                    <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                      <Calendar className="h-3 w-3 mr-1" />
-                      Esta semana
-                    </Badge>
-                  </div>
-                </div>
-                <div className="p-5">
-                  {hasWeeklyActivity ? (
-                    <WeeklyProgressChart data={stats.weeklyProgress} />
-                  ) : (
-                    <EmptyState
-                      icon={TrendingUp}
-                      message="Complete sua primeira tarefa para ver seu progresso aqui."
-                    />
-                  )}
-                </div>
-              </div>
-
-              {/* Tarefas por Categoria */}
-              <div className="bg-base-200 rounded-xl border border-base-300">
-                <div className="p-5 pb-0">
-                  <h2 className="font-semibold text-base-content">Tarefas por Categoria</h2>
-                </div>
-                <div className="p-5 space-y-3">
-                  {stats.tasksCompleted === 0 ? (
-                    <EmptyState
-                      icon={CheckCircle2}
-                      message="Suas tarefas por categoria aparecem aqui após você completar algumas."
-                      ctaLabel="Adicionar tarefa"
-                      onCta={() => navigate('/tasks/notion')}
-                    />
-                  ) : (
-                    <>
-                      <TaskCategoryCard category="Estudos"  count={categoryCounts.study}   icon={BookOpen}       color="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300" />
-                      <TaskCategoryCard category="Trabalho" count={categoryCounts.work}    icon={Briefcase}      color="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" />
-                      <TaskCategoryCard category="Casa"     count={categoryCounts.home}    icon={Home}           color="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" />
-                      <TaskCategoryCard category="Saúde"    count={categoryCounts.health}  icon={Dumbbell}       color="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" />
-                      <TaskCategoryCard category="Lazer"    count={categoryCounts.leisure} icon={Gamepad2}       color="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300" />
-                      <TaskCategoryCard category="Outros"   count={categoryCounts.other}   icon={MoreHorizontal} color="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300" />
-                    </>
-                  )}
-                </div>
+      {/* Conquistas */}
+      <div style={cardStyle}>
+        <div style={sectionHeaderStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontWeight: 600, color: 'var(--color-text)' }}>
+              <Award size={18} color="var(--color-action)" />
+              Suas Conquistas
+            </h2>
+            <span style={{
+              fontSize: '12px',
+              color: 'var(--color-action)',
+              background: 'var(--color-action-bg)',
+              border: '1px solid var(--color-action)',
+              borderRadius: '999px',
+              padding: '3px 10px',
+            }}>
+              {unlockedAchievements.length} de {stats.achievements.length} desbloqueadas
+            </span>
+          </div>
+        </div>
+        <div style={{ padding: '0 20px 20px 20px' }}>
+          {unlockedAchievements.length > 0 && (
+            <div style={{ marginBottom: '24px' }}>
+              <h4 style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: '13px', fontWeight: 600, color: 'var(--color-done)',
+                margin: '0 0 12px 0',
+              }}>
+                <CheckCircle2 size={14} color="var(--color-done)" />
+                Desbloqueadas
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {unlockedAchievements.map((achievement) => (
+                  <AchievementCard key={achievement.id} achievement={achievement} />
+                ))}
               </div>
             </div>
+          )}
 
-            {/* Seção de Conquistas */}
-            <div className="bg-base-200 rounded-xl border border-base-300">
-              <div className="p-5 pb-0">
-                <div className="flex items-center justify-between">
-                  <h2 className="flex items-center gap-2 font-semibold text-base-content">
-                    <Award className="h-5 w-5 text-amber-500" />
-                    Suas Conquistas
-                  </h2>
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                    {unlockedAchievements.length} de {stats.achievements.length} desbloqueadas
-                  </Badge>
-                </div>
-              </div>
-              <div className="p-5">
-                {/* Conquistas Desbloqueadas */}
-                {unlockedAchievements.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      Desbloqueadas
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {unlockedAchievements.map((achievement) => (
-                        <AchievementCard key={achievement.id} achievement={achievement} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Conquistas em Progresso */}
-                {inProgressAchievements.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3 flex items-center gap-2">
-                      <Target className="h-4 w-4 text-violet-500" />
-                      Em Progresso
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                      {inProgressAchievements.map((achievement) => (
-                        <AchievementCard key={achievement.id} achievement={achievement} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+          {inProgressAchievements.length > 0 && (
+            <div>
+              <h4 style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
+                fontSize: '13px', fontWeight: 600, color: 'var(--color-reward)',
+                margin: '0 0 12px 0',
+              }}>
+                <Target size={14} color="var(--color-reward)" />
+                Em Progresso
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {inProgressAchievements.map((achievement) => (
+                  <AchievementCard key={achievement.id} achievement={achievement} />
+                ))}
               </div>
             </div>
+          )}
+        </div>
+      </div>
 
-            {/* Dica do Dia */}
-            <TipBanner variant="info">
-              <strong>Dica para TDAH:</strong> Divida suas tarefas grandes em pequenos passos. Isso ajuda a manter o foco e traz uma sensação de progresso constante. Cada pequena vitória conta!
-            </TipBanner>
+      {/* Dica TDAH */}
+      <div style={{
+        background: 'var(--color-action-bg)',
+        border: '1px solid var(--color-action)',
+        borderLeft: '4px solid var(--color-action)',
+        borderRadius: '12px',
+        padding: '16px 20px',
+        fontSize: '14px',
+        color: 'var(--color-text-sec)',
+        lineHeight: '1.6',
+      }}>
+        <strong style={{ color: 'var(--color-text)' }}>Dica para TDAH:</strong>{' '}
+        Divida suas tarefas grandes em pequenos passos. Isso ajuda a manter o foco e traz uma sensação de progresso constante. Cada pequena vitória conta!
+      </div>
+
     </div>
   );
 }
