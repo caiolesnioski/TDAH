@@ -1,10 +1,11 @@
+import { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   Brain,
   LayoutDashboard, Sun, Sunset, CalendarDays,
   ListTodo, LayoutGrid, CheckSquare,
   Timer, Clock,
-  Settings,
+  Settings, Moon,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
@@ -55,6 +56,32 @@ export default function Sidebar() {
   const name  = user?.name  || 'Usuário';
   const email = user?.email || '';
 
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) {
+      document.body.setAttribute('data-mode', saved);
+      setIsDark(saved === 'dark');
+    } else {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const mode = prefersDark ? 'dark' : 'light';
+      document.body.setAttribute('data-mode', mode);
+      setIsDark(prefersDark);
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newMode = isDark ? 'light' : 'dark';
+    document.body.setAttribute('data-mode', newMode);
+    localStorage.setItem('theme', newMode);
+    setIsDark(!isDark);
+  };
+
   return (
     <aside className="sidebar-nav">
       <div className="sidebar-logo">
@@ -83,6 +110,16 @@ export default function Sidebar() {
           </div>
         ))}
       </div>
+
+      <button onClick={toggleTheme} className="sidebar-item w-full">
+        {isDark
+          ? <Sun size={16} className="sidebar-item-icon" />
+          : <Moon size={16} className="sidebar-item-icon" />
+        }
+        <span className="sidebar-item-text">
+          {isDark ? 'Modo Claro' : 'Modo Escuro'}
+        </span>
+      </button>
 
       <div className="sidebar-user">
         <div className="sidebar-user-avatar">{initials(name)}</div>
