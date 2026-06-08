@@ -19,6 +19,7 @@ type TaskPatch = {
   status?: TaskStatus;
   estimatedMinutes?: number;
   dueDate?: string;
+  difficultyRating?: number;
 };
 
 type TimeGroup = 'morning' | 'afternoon' | 'night' | 'notime';
@@ -98,6 +99,73 @@ function FilterButton({ active, onClick, icon, label, count }: {
   );
 }
 
+// ─── DifficultyRatingModal ────────────────────────────────────────────────────
+
+const DIFFICULTY_COLORS = ['var(--color-done)', '#6BBF7A', 'var(--color-action)', 'var(--color-focus)', 'var(--color-alert)'];
+const DIFFICULTY_LABELS = ['Fácil', '', 'Ok', '', 'Difícil'];
+
+function DifficultyRatingModal({ task, onRate, onSkip }: {
+  task: Task; onRate: (rating: number) => void; onSkip: () => void;
+}) {
+  return (
+    <div
+      style={{position:'fixed',inset:0,zIndex:60,background:'rgba(0,0,0,0.45)',display:'flex',alignItems:'center',justifyContent:'center'}}
+      onClick={onSkip}
+    >
+      <div
+        style={{background:'var(--color-surface)',border:'1px solid var(--color-border)',borderRadius:'16px',padding:'24px 28px',width:'320px',boxShadow:'0 24px 48px rgba(0,0,0,0.24)'}}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'4px'}}>
+          <svg viewBox="0 0 12 12" width="14" height="14" fill="none">
+            <path d="M2 6L5 9L10 3" stroke="var(--color-done)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span style={{fontSize:'12px',color:'var(--color-done)',fontWeight:500}}>Tarefa concluída!</span>
+        </div>
+        <p style={{fontSize:'15px',fontWeight:600,color:'var(--color-text)',marginBottom:'20px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+          {task.title}
+        </p>
+        <p style={{fontSize:'13px',color:'var(--color-text-sec)',marginBottom:'14px'}}>
+          Como foi a dificuldade?
+        </p>
+        <div style={{display:'flex',gap:'8px',marginBottom:'18px'}}>
+          {[1,2,3,4,5].map((n) => (
+            <button
+              key={n}
+              onClick={() => onRate(n)}
+              style={{
+                flex:1,height:'44px',borderRadius:'10px',border:'1px solid var(--color-border)',
+                background:'var(--color-surface-2)',cursor:'pointer',display:'flex',
+                flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'2px',
+                transition:'background 0.12s,border-color 0.12s',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = DIFFICULTY_COLORS[n-1];
+                (e.currentTarget as HTMLButtonElement).style.background = DIFFICULTY_COLORS[n-1] + '22';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)';
+                (e.currentTarget as HTMLButtonElement).style.background = 'var(--color-surface-2)';
+              }}
+            >
+              <span style={{fontSize:'15px',fontWeight:700,color:DIFFICULTY_COLORS[n-1]}}>{n}</span>
+              {DIFFICULTY_LABELS[n-1] && (
+                <span style={{fontSize:'9px',color:'var(--color-text-muted)',lineHeight:1}}>{DIFFICULTY_LABELS[n-1]}</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={onSkip}
+          style={{width:'100%',background:'transparent',border:'none',color:'var(--color-text-muted)',fontSize:'12px',cursor:'pointer',padding:'4px'}}
+        >
+          Pular
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── TaskRow ───────────────────────────────────────────────────────────────────
 
 function TaskRow({ task, onToggle, onSelect }: {
@@ -118,7 +186,7 @@ function TaskRow({ task, onToggle, onSelect }: {
     : {};
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg group transition-colors" style={rowStyle}>
+    <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg group transition-colors" style={{...rowStyle, position: 'relative'}}>
       <button
         onClick={() => onToggle(task)}
         className="w-4 h-4 rounded-full border-2 flex-shrink-0 transition-all flex items-center justify-center"
@@ -127,6 +195,8 @@ function TaskRow({ task, onToggle, onSelect }: {
           background: isCompleted ? 'var(--color-done)' : 'transparent',
           cursor: 'pointer',
           padding: 0,
+          position: 'relative',
+          zIndex: 10,
         }}
         aria-label={isCompleted ? 'Desmarcar' : 'Concluir'}
       >
@@ -163,17 +233,26 @@ function TaskRow({ task, onToggle, onSelect }: {
         </span>
       )}
 
-      {task.priority === TaskPriority.HIGH && (
+      {isCompleted && task.difficultyRating != null && (
+        <span
+          title={`Dificuldade: ${task.difficultyRating}/5`}
+          style={{fontSize:'10px',fontWeight:600,color:DIFFICULTY_COLORS[task.difficultyRating-1],flexShrink:0,opacity:0.8}}
+        >
+          {task.difficultyRating}/5
+        </span>
+      )}
+
+      {!isCompleted && task.priority === TaskPriority.HIGH && (
         <Flag size={12} style={{color:'var(--color-alert)',flexShrink:0}} />
       )}
-      {task.priority === TaskPriority.MEDIUM && (
+      {!isCompleted && task.priority === TaskPriority.MEDIUM && (
         <Flag size={12} style={{color:'var(--color-action)',flexShrink:0}} />
       )}
 
       {!isCompleted && (
         <button
           onClick={() => start(task, isStudy ? 25 : 30, isStudy)}
-          className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+          className="opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity flex-shrink-0"
           style={{background:'none',border:'none',cursor:'pointer',padding:0,color:'var(--color-action)'}}
           title={isStudy ? 'Iniciar Pomodoro' : 'Iniciar timer'}
           aria-label="Iniciar timer"
@@ -184,7 +263,7 @@ function TaskRow({ task, onToggle, onSelect }: {
 
       <button
         onClick={() => onSelect(task)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity flex-shrink-0"
         style={{background:'none',border:'none',cursor:'pointer',padding:0,color:'var(--color-text-muted)'}}
         aria-label="Detalhes"
       >
@@ -352,9 +431,10 @@ export default function TasksNotionView() {
   const { start } = useFloatingTimerStore();
 
   const [activeFilter, setActiveFilter] = useState<'today' | 'all' | TaskCategory | string>('today');
-  const [selectedTask,  setSelectedTask]  = useState<Task | null>(null);
+  const [selectedTask,    setSelectedTask]    = useState<Task | null>(null);
   const [showNewTaskForm, setShowNewTaskForm] = useState(false);
   const [showCompleted,   setShowCompleted]   = useState(false);
+  const [pendingComplete, setPendingComplete] = useState<Task | null>(null);
 
   const [newTitle,    setNewTitle]    = useState('');
   const [newDate,     setNewDate]     = useState('');
@@ -406,8 +486,24 @@ export default function TasksNotionView() {
   }, {});
 
   function handleToggle(task: Task) {
-    const newStatus = task.status === TaskStatus.COMPLETED ? TaskStatus.PENDING : TaskStatus.COMPLETED;
-    updateTask.mutate({ id: task.id, data: { status: newStatus } });
+    if (task.status === TaskStatus.COMPLETED) {
+      updateTask.mutate({ id: task.id, data: { status: TaskStatus.PENDING } });
+    } else {
+      setPendingComplete(task);
+    }
+  }
+
+  function handleCompleteWithRating(rating: number | null) {
+    if (!pendingComplete) return;
+    updateTask.mutate({
+      id: pendingComplete.id,
+      data: {
+        status: TaskStatus.COMPLETED,
+        ...(rating !== null ? { difficultyRating: rating } : {}),
+      },
+    });
+    setPendingComplete(null);
+    setShowCompleted(true);
   }
 
   function resetForm() {
@@ -589,6 +685,7 @@ export default function TasksNotionView() {
                 {/* Input row */}
                 <div style={{display:'flex',alignItems:'center',gap:'8px',padding:'10px 16px'}}>
                   <button
+                    type="button"
                     onClick={() => handleSaveNew(true)}
                     title="Salvar como concluída"
                     style={{
@@ -611,42 +708,44 @@ export default function TasksNotionView() {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleSaveNew();
-                      if (e.key === 'Escape') resetForm();
+                      if (e.key === 'Enter') { e.preventDefault(); handleSaveNew(); }
+                      if (e.key === 'Escape') { e.preventDefault(); resetForm(); }
                     }}
                   />
 
                   {/* Date */}
                   <div className="relative flex-shrink-0">
-                    <button style={{...ghostBtnStyle,color:newDate?'var(--color-action)':'var(--color-text-muted)'}}
+                    <button type="button" style={{...ghostBtnStyle,color:newDate?'var(--color-action)':'var(--color-text-muted)'}}
                       onClick={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
                       <CalendarDays size={13} />
                     </button>
                     {showDatePicker && (
                       <div style={pickerPopupStyle}>
                         <input type="date" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
-                          value={newDate} onChange={(e) => { setNewDate(e.target.value); setShowDatePicker(false); }} />
+                          value={newDate} onChange={(e) => { setNewDate(e.target.value); setShowDatePicker(false); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} />
                       </div>
                     )}
                   </div>
 
                   {/* Time */}
                   <div className="relative flex-shrink-0">
-                    <button style={{...ghostBtnStyle,color:newTime?'var(--color-action)':'var(--color-text-muted)'}}
+                    <button type="button" style={{...ghostBtnStyle,color:newTime?'var(--color-action)':'var(--color-text-muted)'}}
                       onClick={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
                       <Clock size={13} />
                     </button>
                     {showTimePicker && (
                       <div style={pickerPopupStyle}>
                         <input type="time" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
-                          value={newTime} onChange={(e) => { setNewTime(e.target.value); setShowTimePicker(false); }} />
+                          value={newTime} onChange={(e) => { setNewTime(e.target.value); setShowTimePicker(false); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} />
                       </div>
                     )}
                   </div>
 
                   {/* Category */}
                   <div className="relative flex-shrink-0">
-                    <button style={ghostBtnStyle}
+                    <button type="button" style={ghostBtnStyle}
                       onClick={() => { setShowCategoryPicker(!showCategoryPicker); setShowDatePicker(false); setShowTimePicker(false); setShowPriorityPicker(false); }}>
                       {(() => { const { Icon, iconColor } = CATEGORY_META[newCategory]; return <Icon size={13} style={{color:iconColor}} />; })()}
                     </button>
@@ -672,6 +771,7 @@ export default function TasksNotionView() {
                   {/* Priority */}
                   <div className="relative flex-shrink-0">
                     <button
+                      type="button"
                       style={{...ghostBtnStyle,color:newPriority===TaskPriority.HIGH?'var(--color-alert)':newPriority===TaskPriority.MEDIUM?'var(--color-action)':'var(--color-text-muted)'}}
                       onClick={() => { setShowPriorityPicker(!showPriorityPicker); setShowDatePicker(false); setShowTimePicker(false); setShowCategoryPicker(false); }}>
                       <Flag size={13} />
@@ -689,8 +789,8 @@ export default function TasksNotionView() {
                     )}
                   </div>
 
-                  <button onClick={() => handleSaveNew()} style={{...ghostBtnStyle,fontSize:'13px'}}>✓</button>
-                  <button onClick={resetForm} style={ghostBtnStyle}><X size={13} /></button>
+                  <button type="button" onClick={() => handleSaveNew()} style={{...ghostBtnStyle,fontSize:'13px'}}>✓</button>
+                  <button type="button" onClick={resetForm} style={ghostBtnStyle}><X size={13} /></button>
                 </div>
 
                 {/* Duration + Start row */}
@@ -699,7 +799,7 @@ export default function TasksNotionView() {
                   <span style={{fontSize:'11px',color:'var(--color-text-muted)'}}>Duração:</span>
                   <div style={{display:'flex',gap:'4px'}}>
                     {[15, 25, 30, 45, 60].map((d) => (
-                      <button key={d}
+                      <button key={d} type="button"
                         style={{fontSize:'11px',padding:'2px 8px',borderRadius:'999px',cursor:'pointer',border:`1px solid ${newDuration===d?'var(--color-action)':'var(--color-border)'}`,color:newDuration===d?'var(--color-action)':'var(--color-text-muted)',background:newDuration===d?'var(--color-action-bg)':'transparent'}}
                         onClick={() => setNewDuration(d)}>
                         {d}m
@@ -714,6 +814,7 @@ export default function TasksNotionView() {
                   )}
 
                   <button
+                    type="button"
                     onClick={handleSaveAndStart}
                     disabled={!newTitle.trim()}
                     style={{marginLeft:'auto',background:'var(--color-action)',color:'#1E1E1C',border:'none',borderRadius:'6px',padding:'4px 10px',fontSize:'11px',fontWeight:500,cursor:'pointer',display:'flex',alignItems:'center',gap:'6px',opacity:!newTitle.trim()?0.4:1}}
@@ -784,6 +885,14 @@ export default function TasksNotionView() {
           </div>
         </main>
       </div>
+
+      {pendingComplete && (
+        <DifficultyRatingModal
+          task={pendingComplete}
+          onRate={(rating) => handleCompleteWithRating(rating)}
+          onSkip={() => handleCompleteWithRating(null)}
+        />
+      )}
 
       {selectedTask && <DetailPanel task={selectedTask} onClose={() => setSelectedTask(null)} />}
     </>

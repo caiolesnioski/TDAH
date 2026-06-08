@@ -45,6 +45,7 @@ export interface Task {
   actualMinutes?: number;
   deadline: string;
   dueDate?: string;
+  difficultyRating?: number;
   createdAt: string;
   updatedAt: string;
 }

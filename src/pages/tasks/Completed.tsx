@@ -161,12 +161,14 @@ export default function Completed() {
               const cat = CATEGORY_CONFIG[task.category];
               const pri = PRIORITY_CONFIG[task.priority];
               const CatIcon = CAT_ICONS[task.category];
+          
               return (
                 <div key={task.id} style={{display:'flex',alignItems:'center',gap:'12px',padding:'12px 16px',borderRadius:'12px',border:'1px solid var(--color-border)',background:'var(--color-surface)'}}>
                   <CheckCircle2 style={{width:'16px',height:'16px',color:'var(--color-done)',flexShrink:0}} />
                   <div style={{flex:1,minWidth:0}}>
                     <p style={{fontSize:'13px',fontWeight:500,color:'var(--color-text-sec)',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',textDecoration:'line-through'}}>
                       {task.title || '(sem título)'}
+                      ({task.difficultyRating || 'sans note' })
                     </p>
                     <div style={{display:'flex',flexWrap:'wrap',gap:'6px',marginTop:'4px'}}>
                       <span style={{display:'inline-flex',alignItems:'center',gap:'4px',fontSize:'11px',background:cat.bg,color:cat.text,padding:'2px 6px',borderRadius:'999px'}}>

@@ -12,6 +12,7 @@ type SupabaseTask = {
   estimated_minutes: number;
   actual_minutes: number | null;
   deadline: string | null;
+  difficulty_rating: number | null;
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -29,6 +30,7 @@ function mapTask(row: SupabaseTask): Task {
     actualMinutes: row.actual_minutes ?? undefined,
     deadline: row.deadline ?? '',
     dueDate: row.deadline ?? undefined,
+    difficultyRating: row.difficulty_rating ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -42,6 +44,7 @@ type NewTaskPayload = {
   estimatedMinutes?: number;
   description?: string;
   dueDate?: string;
+  difficultyRating?: number;
 };
 
 type UpdateTaskPayload = Partial<NewTaskPayload>;
@@ -102,6 +105,7 @@ export function useUpdateTask() {
       if (payload.status !== undefined) updateData.status = payload.status;
       if (payload.estimatedMinutes !== undefined) updateData.estimated_minutes = payload.estimatedMinutes;
       if ('dueDate' in payload) updateData.deadline = payload.dueDate ?? null;
+      if (payload.difficultyRating !== undefined) updateData.difficulty_rating = payload.difficultyRating;
 
       const { data, error } = await supabase
         .from('tasks')
