@@ -50,6 +50,17 @@ const TASK_CAT_STYLES: Record<number, { bg: string; borderColor: string; color: 
   [TaskCategory.OTHER]:   { bg: 'var(--color-surface-2)', borderColor: 'var(--color-text-muted)', color: 'var(--color-text-muted)' },
 };
 
+const TOTAL_HOURS = END_HOUR - START_HOUR; // 17
+
+const TASK_COLORS: Record<number, { bg: string; border: string; text: string }> = {
+  0: { bg: '#EEEDFE', border: '#7F77DD', text: '#7F77DD' },
+  1: { bg: '#E6F1FB', border: '#378ADD', text: '#378ADD' },
+  2: { bg: '#E1F5EE', border: '#1D9E75', text: '#1D9E75' },
+  3: { bg: '#FEE2E2', border: '#E8713C', text: '#E8713C' },
+  4: { bg: '#FAEEDA', border: '#EF9F27', text: '#EF9F27' },
+  5: { bg: '#F1EFE8', border: '#9B9890', text: '#9B9890' },
+};
+
 function getWeekMonday(offset: number): dayjs.Dayjs {
   const today = dayjs();
   const dow = today.day();
@@ -107,14 +118,37 @@ export default function MyWeek() {
       .filter(t => t.status !== TaskStatus.COMPLETED && t.status !== TaskStatus.CANCELLED)
       .forEach(t => {
         const dl = t.deadline || t.dueDate || '';
-        if (map[dl] !== undefined) map[dl].push(t);
+        const dlDate = dl ? dayjs(dl).format('YYYY-MM-DD') : '';
+        if (map[dlDate] !== undefined) map[dlDate].push(t);
       });
     return map;
   }, [tasks, weekDays]);
 
-  const hasAnyTasks = useMemo(() =>
-    weekDays.some(d => (tasksByDate[d.dateStr]?.length ?? 0) > 0),
-    [tasksByDate, weekDays]);
+  const { allDayByDate, timedByDate } = useMemo(() => {
+    const allDayByDate: Record<string, typeof tasks> = {};
+    const timedByDate: Record<string, typeof tasks> = {};
+    weekDays.forEach(d => { allDayByDate[d.dateStr] = []; timedByDate[d.dateStr] = []; });
+    weekDays.forEach(d => {
+      (tasksByDate[d.dateStr] ?? []).forEach(task => {
+        if (!task.deadline) { allDayByDate[d.dateStr].push(task); return; }
+        const start = dayjs(task.deadline);
+        const h = start.hour();
+        const m = start.minute();
+        // UTC midnight stored as timestamptz lands at h=2 in UTC+2 — treat as all-day.
+        // Also anything outside the visible range (06:00–23:00) goes to all-day.
+        if ((h === 0 && m === 0) || h < START_HOUR || h >= END_HOUR) {
+          allDayByDate[d.dateStr].push(task);
+        } else {
+          timedByDate[d.dateStr].push(task);
+        }
+      });
+    });
+    return { allDayByDate, timedByDate };
+  }, [tasksByDate, weekDays]);
+
+  const hasAnyAllDayTasks = useMemo(() =>
+    weekDays.some(d => (allDayByDate[d.dateStr]?.length ?? 0) > 0),
+    [allDayByDate, weekDays]);
 
   const blocksByDow = useMemo(() => {
     const map: Record<number, typeof blocks> = {};
@@ -207,8 +241,8 @@ export default function MyWeek() {
           })}
         </div>
 
-        {/* All-day tasks row */}
-        {hasAnyTasks && (
+        {/* All-day tasks row — só para tarefas sem horário */}
+        {hasAnyAllDayTasks && (
           <div style={{display:'flex',borderBottom:'1px solid rgba(0,0,0,0.06)',background:'var(--color-surface-2)'}}>
             <div style={{width:'56px',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'flex-end',padding:'4px 8px 4px 0'}}>
               <span style={{fontSize:'10px',color:'var(--color-text-muted)',textAlign:'right',lineHeight:'1.3'}}>
@@ -221,7 +255,7 @@ export default function MyWeek() {
                 style={{flex:1,minHeight:'28px',padding:'4px',display:'flex',flexDirection:'column',gap:'2px',borderRight:'1px solid rgba(0,0,0,0.06)'}}
                 className="last:border-r-0"
               >
-                {tasksByDate[d.dateStr]?.map(t => {
+                {allDayByDate[d.dateStr]?.map(t => {
                   const s = TASK_CAT_STYLES[t.category] ?? TASK_CAT_STYLES[TaskCategory.OTHER];
                   return (
                     <div key={t.id} style={{fontSize:'10px',padding:'2px 6px',borderRadius:'4px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',background:s.bg,borderLeft:`2px solid ${s.borderColor}`,color:s.color}}>
@@ -259,7 +293,7 @@ export default function MyWeek() {
               return (
                 <div
                   key={d.dateStr}
-                  style={{flex:1,position:'relative',borderRight:'1px solid rgba(0,0,0,0.06)',background:isWeekend?'rgba(0,0,0,0.015)':'transparent'}}
+                  style={{flex:1,position:'relative',height:`${TOTAL_HOURS * HOUR_PX}px`,borderRight:'1px solid rgba(0,0,0,0.06)',background:isWeekend?'rgba(0,0,0,0.015)':'transparent'}}
                   className="last:border-r-0"
                 >
                   {/* Hour grid lines */}
@@ -299,6 +333,30 @@ export default function MyWeek() {
                             </p>
                           )}
                         </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Timed tasks — posicionadas na hora exata */}
+                  {(timedByDate[d.dateStr] ?? []).map(task => {
+                    const start = dayjs(task.deadline);
+                    const startMin = start.hour() * 60 + start.minute();
+                    const top = ((startMin - START_HOUR * 60) / 60) * HOUR_PX;
+                    const height = Math.max(24, ((task.estimatedMinutes || 30) / 60) * HOUR_PX);
+                    const colors = TASK_COLORS[task.category] ?? TASK_COLORS[5];
+                    return (
+                      <div
+                        key={`task-${task.id}`}
+                        style={{position:'absolute',top,height,left:2,right:2,zIndex:11,background:colors.bg,borderLeft:`3px solid ${colors.border}`,borderRadius:'0 6px 6px 0',padding:'3px 6px',overflow:'hidden',cursor:'pointer'}}
+                      >
+                        <p style={{fontSize:'11px',fontWeight:600,color:colors.text,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',lineHeight:'1.3',margin:0}}>
+                          {task.title}
+                        </p>
+                        {height > 30 && (
+                          <p style={{fontSize:'10px',color:colors.text,opacity:0.7,margin:0}}>
+                            {start.format('HH:mm')}{task.estimatedMinutes ? ` · ${task.estimatedMinutes}min` : ''}
+                          </p>
+                        )}
                       </div>
                     );
                   })}

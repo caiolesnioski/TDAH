@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TimeInput } from '@/components/ui/IosWheelPicker';
 import { User, Mail, Moon, Sun, Save, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -165,8 +166,8 @@ export default function Profile() {
             <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Sun style={{ width: '13px', height: '13px', color: 'var(--color-action)' }} /> Acordo às
             </label>
-            <input
-              type="time" value={sleep.wake}
+            <TimeInput
+              value={sleep.wake}
               onChange={(e) => setSleep((s) => ({ ...s, wake: e.target.value }))}
               style={inputStyle}
             />
@@ -175,8 +176,8 @@ export default function Profile() {
             <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Moon style={{ width: '13px', height: '13px', color: 'var(--color-reward)' }} /> Durmo às
             </label>
-            <input
-              type="time" value={sleep.sleep}
+            <TimeInput
+              value={sleep.sleep}
               onChange={(e) => setSleep((s) => ({ ...s, sleep: e.target.value }))}
               style={inputStyle}
             />

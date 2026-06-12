@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TimeInput } from '@/components/ui/IosWheelPicker';
 import { useNavigate } from 'react-router-dom';
 import { useCreateTimeBlock } from '@/hooks/useTimeBlocks';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,11 +190,11 @@ export default function NewSchedule() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Início</Label>
-                      <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                      <TimeInput value={startTime} onChange={(e) => setStartTime(e.target.value)} style={{display:'flex',height:'36px',width:'100%',borderRadius:'6px',border:'1px solid var(--color-border)',background:'transparent',padding:'4px 12px',fontSize:'14px',color:'var(--color-text)'}} />
                     </div>
                     <div className="space-y-2">
                       <Label>Fim</Label>
-                      <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                      <TimeInput value={endTime} onChange={(e) => setEndTime(e.target.value)} style={{display:'flex',height:'36px',width:'100%',borderRadius:'6px',border:'1px solid var(--color-border)',background:'transparent',padding:'4px 12px',fontSize:'14px',color:'var(--color-text)'}} />
                     </div>
                   </div>
 

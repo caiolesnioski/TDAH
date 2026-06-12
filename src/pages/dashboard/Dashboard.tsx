@@ -28,6 +28,7 @@ import { TaskStatus, TaskCategory, TaskPriority } from '@/types';
 import type { UserStats, Achievement, Task } from '@/types';
 import { useTasks } from '@/hooks/useTasks';
 import EmptyState from '@/components/dashboard/EmptyState';
+import TipOfDayCard from '@/components/TipOfDayCard';
 
 const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -436,6 +437,9 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Dica do dia */}
+      <TipOfDayCard />
 
       {/* Ação Rápida */}
       <div style={{ background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px' }}>

@@ -4,15 +4,10 @@ import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
 import { useCalendarPanelStore } from '@/store/calendarPanelStore';
 import { useTasks } from '@/hooks/useTasks';
 import { useTimeBlocks } from '@/hooks/useTimeBlocks';
+import { TaskQuickCreateDialog } from '@/components/TaskQuickCreateDialog';
 
 const WEEKDAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
-function formatTime(time: string) {
-  const [h, m] = time.split(':').map(Number);
-  const suffix = h >= 12 ? 'pm' : 'am';
-  const hour = h % 12 || 12;
-  return m === 0 ? `${hour}${suffix}` : `${hour}:${m.toString().padStart(2, '0')}${suffix}`;
-}
 
 function buildGrid(currentMonth: Dayjs): Dayjs[] {
   const start = currentMonth.startOf('month').startOf('week');
@@ -22,6 +17,7 @@ function buildGrid(currentMonth: Dayjs): Dayjs[] {
 export function CalendarPanel() {
   const { isOpen, selectedDate, selectDate, close } = useCalendarPanelStore();
   const [currentMonth, setCurrentMonth] = useState<Dayjs>(() => dayjs().startOf('month'));
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const { data: tasks = [] } = useTasks();
   const { data: timeBlocks = [] } = useTimeBlocks();
 
@@ -32,7 +28,10 @@ export function CalendarPanel() {
   function hasEvents(dateStr: string) {
     const dow = dayjs(dateStr).day();
     return (
-      tasks.some((t) => t.dueDate === dateStr) ||
+      tasks.some((t) => {
+        const dl = t.deadline || t.dueDate || '';
+        return dl ? dayjs(dl).format('YYYY-MM-DD') === dateStr : false;
+      }) ||
       timeBlocks.some((b) => b.dayOfWeek === dow)
     );
   }
@@ -58,7 +57,10 @@ export function CalendarPanel() {
   }
 
   const selectedDow = dayjs(activeDate).day();
-  const dayTasks = tasks.filter((t) => t.dueDate === activeDate && t.status !== 3);
+  const dayTasks = tasks.filter((t) => {
+    const dl = t.deadline || t.dueDate || '';
+    return dl ? dayjs(dl).format('YYYY-MM-DD') === activeDate && t.status !== 3 : false;
+  });
   const dayBlocks = timeBlocks.filter((b) => b.dayOfWeek === selectedDow);
   const hasActivities = dayTasks.length > 0 || dayBlocks.length > 0;
 
@@ -138,51 +140,67 @@ export function CalendarPanel() {
           <span className="text-sm font-medium">
             {dayjs(activeDate).format('MMMM D, YYYY')}
           </span>
-          <button className="btn btn-ghost btn-xs btn-circle">
+          <button
+            className="btn btn-ghost btn-xs btn-circle"
+            onClick={() => setShowCreateDialog(true)}
+          >
             <Plus size={16} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">
-          {!hasActivities ? (
-            <div className="flex items-center justify-center h-full text-base-content/40 text-sm">
-              Nenhuma atividade
+        <div className="flex-1 overflow-y-auto" style={{ padding: '0 12px' }}>
+          {dayBlocks.map((block) => (
+            <div key={block.id} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 0', borderBottom: '1px solid var(--color-border)',
+            }}>
+              <div style={{
+                width: '3px', height: '36px', borderRadius: '2px', flexShrink: 0,
+                background: block.type === 'WORK' ? 'var(--color-focus)'
+                  : block.type === 'CLASS' ? 'var(--color-reward)'
+                  : 'var(--color-action)',
+              }} />
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>{block.title}</p>
+                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>{block.startTime} – {block.endTime}</p>
+              </div>
             </div>
-          ) : (
-            <div className="flex flex-col gap-1">
-              {dayBlocks.map((block) => (
-                <div
-                  key={block.id}
-                  className="flex items-stretch gap-2 px-2 py-2 rounded-lg hover:bg-base-300 transition-colors min-h-[52px]"
-                >
-                  <div className="w-1 rounded-full bg-primary shrink-0" />
-                  <div className="flex flex-col justify-center min-w-0">
-                    <span className="text-sm font-medium truncate">{block.title}</span>
-                    <span className="text-xs text-base-content/50">
-                      {formatTime(block.startTime)} - {formatTime(block.endTime)}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              {dayTasks.map((task) => (
-                <div
-                  key={task.id}
-                  className="flex items-stretch gap-2 px-2 py-2 rounded-lg hover:bg-base-300 transition-colors min-h-[52px]"
-                >
-                  <div className="w-1 rounded-full bg-warning shrink-0" />
-                  <div className="flex flex-col justify-center min-w-0">
-                    <span className="text-sm font-medium truncate">{task.title}</span>
-                    <span className="text-xs text-base-content/50">
-                      {dayjs(activeDate).format('MMM D')} · tarefa
-                    </span>
-                  </div>
-                </div>
-              ))}
+          ))}
+
+          {dayTasks.map((task) => (
+            <div key={task.id} style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '10px 0', borderBottom: '1px solid var(--color-border)',
+            }}>
+              <div style={{
+                width: '3px', height: '36px', borderRadius: '2px', flexShrink: 0,
+                background: 'var(--color-done)',
+              }} />
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text)', margin: 0 }}>{task.title}</p>
+                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
+                  {task.deadline ? dayjs(task.deadline).format('HH:mm') : 'Sem horário'}
+                  {task.estimatedMinutes ? ` · ${task.estimatedMinutes}min` : ''}
+                </p>
+              </div>
             </div>
+          ))}
+
+          {!hasActivities && (
+            <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '13px', padding: '24px 0' }}>
+              Nenhuma atividade neste dia
+            </p>
           )}
         </div>
       </div>
     </div>
+
+    <TaskQuickCreateDialog
+      isOpen={showCreateDialog}
+      date={activeDate}
+      onClose={() => setShowCreateDialog(false)}
+      onSuccess={() => setShowCreateDialog(false)}
+    />
     </>
   );
 }

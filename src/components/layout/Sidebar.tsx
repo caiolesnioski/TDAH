@@ -6,8 +6,10 @@ import {
   ListTodo, LayoutGrid, CheckSquare,
   Timer, Clock,
   Settings, Moon,
+  Lightbulb,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useTipsPanelStore } from '@/store/tipsPanelStore';
 
 const sections = [
   {
@@ -55,6 +57,8 @@ export default function Sidebar() {
   const { user } = useAuth();
   const name  = user?.name  || 'Usuário';
   const email = user?.email || '';
+
+  const { toggle: toggleTips } = useTipsPanelStore();
 
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem('theme');
@@ -110,6 +114,11 @@ export default function Sidebar() {
           </div>
         ))}
       </div>
+
+      <button onClick={toggleTips} className="sidebar-item w-full">
+        <Lightbulb size={16} className="sidebar-item-icon" />
+        <span className="sidebar-item-text">Dicas de Foco</span>
+      </button>
 
       <button onClick={toggleTheme} className="sidebar-item w-full">
         {isDark

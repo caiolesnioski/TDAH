@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TimeInput } from '@/components/ui/IosWheelPicker';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -252,11 +253,11 @@ function Step3Profile({
             <Clock className="w-4 h-4 text-violet-500" />
             Horário que costuma acordar
           </Label>
-          <Input
-            type="time"
+          <TimeInput
             value={wakeTime}
             onChange={(e) => onWakeTime(e.target.value)}
             className="w-36"
+            style={{display:'inline-flex',height:'36px',borderRadius:'6px',border:'1px solid var(--color-border)',background:'transparent',padding:'4px 12px',fontSize:'14px',color:'var(--color-text)'}}
           />
         </div>
 

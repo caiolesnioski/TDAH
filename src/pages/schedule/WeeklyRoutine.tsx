@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { TimeBlockType } from '@/types';
+import { TimeInput, DateInput } from '@/components/ui/IosWheelPicker';
 import type { TimeBlock } from '@/types';
 
 const DAYS_OF_WEEK = [
@@ -344,8 +345,8 @@ export default function WeeklyRoutine() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
               <div>
                 <label style={labelStyle} htmlFor="start">Hora Início</label>
-                <input
-                  id="start" type="time"
+                <TimeInput
+                  id="start"
                   value={newBlock.startTime}
                   onChange={(e) => setNewBlock({ ...newBlock, startTime: e.target.value })}
                   style={inputStyle}
@@ -353,8 +354,8 @@ export default function WeeklyRoutine() {
               </div>
               <div>
                 <label style={labelStyle} htmlFor="end">Hora Fim</label>
-                <input
-                  id="end" type="time"
+                <TimeInput
+                  id="end"
                   value={newBlock.endTime}
                   onChange={(e) => setNewBlock({ ...newBlock, endTime: e.target.value })}
                   style={inputStyle}
@@ -381,21 +382,20 @@ export default function WeeklyRoutine() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                   <div>
                     <label style={labelStyle} htmlFor="validFrom">A partir de</label>
-                    <input
-                      id="validFrom" type="date"
+                    <DateInput
+                      id="validFrom"
                       value={newBlock.validFrom}
                       onChange={(e) => setNewBlock({ ...newBlock, validFrom: e.target.value })}
-                      min={today}
                       style={inputStyle}
                     />
                   </div>
                   <div>
                     <label style={labelStyle} htmlFor="validUntil">Até (opcional)</label>
-                    <input
-                      id="validUntil" type="date"
+                    <DateInput
+                      id="validUntil"
                       value={newBlock.validUntil}
                       onChange={(e) => setNewBlock({ ...newBlock, validUntil: e.target.value })}
-                      min={newBlock.validFrom || today}
+                      placeholder="Sem data fim"
                       style={inputStyle}
                     />
                     <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px', marginBottom: 0 }}>

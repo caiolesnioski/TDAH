@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { TimeInput, DateInput } from '@/components/ui/IosWheelPicker';
 import {
   CalendarDays, ListTodo, BookOpen, Briefcase, Home, Heart, Gamepad2,
   MoreHorizontal, Plus, ChevronRight, ChevronDown, Flag, Clock, Trash2, Play, X, Brain, Tag, Loader2,
@@ -344,7 +345,7 @@ function DetailPanel({ task, onClose }: { task: Task; onClose: () => void }) {
 
           <div style={fieldStyle}>
             <CalendarDays size={14} style={iconStyle} />
-            <input type="date"
+            <DateInput
               style={{flex:1,fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
               value={date}
               onChange={(e) => { setDate(e.target.value); save({ dueDate: buildDeadline(e.target.value, time) }); }} />
@@ -352,7 +353,7 @@ function DetailPanel({ task, onClose }: { task: Task; onClose: () => void }) {
 
           <div style={fieldStyle}>
             <Clock size={14} style={iconStyle} />
-            <input type="time"
+            <TimeInput
               style={{flex:1,fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
               value={time}
               onChange={(e) => { setTime(e.target.value); save({ dueDate: buildDeadline(date, e.target.value) }); }} />
@@ -442,8 +443,7 @@ export default function TasksNotionView() {
   const [newPriority, setNewPriority] = useState<TaskPriority>(TaskPriority.MEDIUM);
   const [newCategory, setNewCategory] = useState<TaskCategory>(TaskCategory.OTHER);
   const [newDuration, setNewDuration] = useState(25);
-  const [showDatePicker,     setShowDatePicker]     = useState(false);
-  const [showTimePicker,     setShowTimePicker]     = useState(false);
+
   const [showPriorityPicker, setShowPriorityPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
@@ -715,32 +715,24 @@ export default function TasksNotionView() {
 
                   {/* Date */}
                   <div className="relative flex-shrink-0">
-                    <button type="button" style={{...ghostBtnStyle,color:newDate?'var(--color-action)':'var(--color-text-muted)'}}
-                      onClick={() => { setShowDatePicker(!showDatePicker); setShowTimePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
+                    <DateInput
+                      value={newDate}
+                      onChange={(e) => { setNewDate(e.target.value); setShowPriorityPicker(false); setShowCategoryPicker(false); }}
+                      style={{...ghostBtnStyle,color:newDate?'var(--color-action)':'var(--color-text-muted)'}}
+                    >
                       <CalendarDays size={13} />
-                    </button>
-                    {showDatePicker && (
-                      <div style={pickerPopupStyle}>
-                        <input type="date" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
-                          value={newDate} onChange={(e) => { setNewDate(e.target.value); setShowDatePicker(false); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} />
-                      </div>
-                    )}
+                    </DateInput>
                   </div>
 
                   {/* Time */}
                   <div className="relative flex-shrink-0">
-                    <button type="button" style={{...ghostBtnStyle,color:newTime?'var(--color-action)':'var(--color-text-muted)'}}
-                      onClick={() => { setShowTimePicker(!showTimePicker); setShowDatePicker(false); setShowPriorityPicker(false); setShowCategoryPicker(false); }}>
+                    <TimeInput
+                      value={newTime}
+                      onChange={(e) => { setNewTime(e.target.value); setShowPriorityPicker(false); setShowCategoryPicker(false); }}
+                      style={{...ghostBtnStyle,color:newTime?'var(--color-action)':'var(--color-text-muted)'}}
+                    >
                       <Clock size={13} />
-                    </button>
-                    {showTimePicker && (
-                      <div style={pickerPopupStyle}>
-                        <input type="time" style={{fontSize:'13px',background:'transparent',color:'var(--color-text)',outline:'none',border:'none'}}
-                          value={newTime} onChange={(e) => { setNewTime(e.target.value); setShowTimePicker(false); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }} />
-                      </div>
-                    )}
+                    </TimeInput>
                   </div>
 
                   {/* Category */}

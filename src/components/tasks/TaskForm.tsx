@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form';
+import { DateInput } from '@/components/ui/IosWheelPicker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -229,13 +230,11 @@ export function TaskForm({ task, open, onClose, onSubmit, isLoading }: TaskFormP
                 <Calendar className="w-4 h-4" />
                 Prazo *
               </Label>
-              <Input
+              <DateInput
                 id="deadline"
-                type="date"
-                {...register('deadline', {
-                  required: 'O prazo é obrigatório',
-                })}
-                className="text-base"
+                value={watch('deadline')}
+                onChange={(e) => setValue('deadline', e.target.value, { shouldValidate: true })}
+                className="text-base flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
               />
               {errors.deadline && <p className="text-sm text-red-600">{errors.deadline.message}</p>}
             </div>

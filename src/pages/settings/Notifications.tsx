@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { TimeInput } from '@/components/ui/IosWheelPicker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Bell, BellOff, Clock, CheckCircle2, Star, Zap, Save } from 'lucide-react';
@@ -158,8 +159,7 @@ export default function Notifications() {
                 {prefs.dailyDigest && (
                   <div className="py-3 space-y-2">
                     <p className="text-xs font-medium text-gray-600 dark:text-gray-400">Horário do resumo</p>
-                    <input
-                      type="time"
+                    <TimeInput
                       value={prefs.digestTime}
                       onChange={(e) => set('digestTime', e.target.value)}
                       className="block rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"

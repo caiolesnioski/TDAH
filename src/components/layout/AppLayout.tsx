@@ -5,10 +5,15 @@ import { WeeklyPlanningBanner } from '@/components/WeeklyPlanningBanner';
 import TaskFocusModal from '@/components/TaskFocusModal';
 import FloatingTimer from '@/components/FloatingTimer';
 import { CalendarPanel } from '@/components/CalendarPanel';
+import TipsPanel from '@/components/TipsPanel';
+import TipToast from '@/components/TipToast';
+import DailyProductivityModal from '@/components/DailyProductivityModal';
 import { useCalendarPanelStore } from '@/store/calendarPanelStore';
+import { useProductivityModal } from '@/hooks/useProductivityModal';
 
 export default function AppLayout() {
   const toggle = useCalendarPanelStore((s) => s.toggle);
+  const { isOpen: isProductivityOpen, modalStats, closeModal: closeProductivityModal } = useProductivityModal();
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -34,6 +39,15 @@ export default function AppLayout() {
       <TaskFocusModal />
       <FloatingTimer />
       <CalendarPanel />
+      <TipsPanel />
+      <TipToast />
+      {modalStats && (
+        <DailyProductivityModal
+          isOpen={isProductivityOpen}
+          onClose={closeProductivityModal}
+          stats={modalStats}
+        />
+      )}
     </div>
   );
 }
